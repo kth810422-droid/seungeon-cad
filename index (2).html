@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>승언ENG CAD 변환기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+/* ── 기본 리셋 ── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#09090f;--bg2:#10121a;--bg3:#161922;
+  --brd:#1d2535;--brd2:#2a3650;
+  --ac:#3d9bff;--gr:#00e094;--am:#ffb800;--rd:#ff4466;
+  --tx:#d8e8ff;--tx2:#556880;--tx3:#243040;
+  --mono:'JetBrains Mono',monospace;--kr:'Noto Sans KR',sans-serif;
+}
+html,body{height:100%;font-family:var(--kr);background:var(--bg);color:var(--tx);}
+
+/* ── 헤더 ── */
+.hdr{
+  position:fixed;top:0;left:0;right:0;height:48px;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;background:var(--bg2);border-bottom:1px solid var(--brd);
+}
+.logo{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.logo b{color:var(--ac);}
+.logo-badge{font-size:9px;padding:2px 7px;background:rgba(61,155,255,.15);
+  border:1px solid rgba(61,155,255,.3);border-radius:8px;color:var(--ac);font-family:var(--mono);}
+.hdr-st{font-size:10px;color:var(--tx3);display:flex;align-items:center;gap:5px;}
+.hdr-dot{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── PC 레이아웃 ── */
+.pc{display:none;position:fixed;top:48px;left:0;right:0;bottom:0;}
+@media(min-width:769px){
+  .pc{display:grid;grid-template-columns:320px 1fr;}
+  .mob{display:none!important;}
+}
+
+/* PC 왼쪽 */
+.pc-left{overflow-y:auto;border-right:1px solid var(--brd);background:var(--bg2);display:flex;flex-direction:column;}
+.pc-inner{padding:14px;flex:1;}
+.sec{font-size:9px;letter-spacing:2.5px;color:var(--ac);font-family:var(--mono);margin-bottom:9px;}
+
+/* PC 오른쪽 */
+.pc-right{display:flex;flex-direction:column;overflow:hidden;}
+
+/* CAD 툴바 */
+.cad-bar{
+  height:40px;display:flex;align-items:center;gap:6px;
+  padding:0 14px;background:var(--bg2);border-bottom:1px solid var(--brd);flex-shrink:0;
+}
+.cbar{
+  padding:4px 10px;font-size:11px;font-family:var(--kr);
+  background:transparent;color:var(--tx2);border:1px solid var(--brd2);
+  border-radius:5px;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.cbar:hover,.cbar.on{border-color:var(--ac);color:var(--ac);}
+.cbar.on{background:rgba(61,155,255,.1);}
+.cbar-ml{margin-left:auto;}
+.dim-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2);}
+input[type=checkbox]{accent-color:var(--ac);}
+
+/* CAD 뷰 그리드 */
+.cad-grid{
+  flex:1;display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:1px;background:var(--brd);
+  overflow:hidden;min-height:0;
+}
+.cad-grid.layout-f{grid-template-columns:1fr;grid-template-rows:1fr;}
+.cview{background:var(--bg);position:relative;overflow:hidden;min-width:0;min-height:0;}
+.cview-lbl{
+  position:absolute;top:8px;left:10px;
+  font-size:9px;font-family:var(--mono);color:var(--tx3);
+  letter-spacing:1.5px;z-index:2;pointer-events:none;
+}
+.cview svg{position:absolute;inset:0;width:100%;height:100%;}
+.cview canvas{position:absolute;inset:0;width:100%!important;height:100%!important;}
+.cview-empty{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;pointer-events:none;
+}
+.cview-empty-ico{font-size:36px;opacity:.08;}
+.cview-empty-msg{font-size:11px;color:var(--tx3);text-align:center;line-height:1.8;}
+
+/* 저장 바 */
+.save-bar{
+  height:40px;display:flex;align-items:center;gap:6px;
+  padding:0 14px;background:var(--bg2);border-top:1px solid var(--brd);flex-shrink:0;
+}
+.sbar-btn{
+  padding:5px 12px;font-size:11px;font-family:var(--kr);
+  background:transparent;color:var(--tx2);border:1px solid var(--brd2);
+  border-radius:5px;cursor:pointer;transition:all .15s;
+}
+.sbar-btn:hover{border-color:var(--ac);color:var(--ac);}
+
+/* ── 모바일 레이아웃 ── */
+.mob{display:none;flex-direction:column;position:fixed;top:48px;left:0;right:0;bottom:0;}
+@media(max-width:768px){
+  .mob{display:flex;}
+  .pc{display:none!important;}
+}
+.mob-pages{flex:1;position:relative;overflow:hidden;}
+.mob-page{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;background:var(--bg);}
+.mob-page.on{display:block;}
+.mob-inner{padding:14px;}
+
+/* 모바일 네비 */
+.mob-nav{
+  height:52px;display:flex;flex-shrink:0;
+  background:var(--bg2);border-top:1px solid var(--brd);position:relative;
+}
+.mob-nav-bar{position:absolute;top:0;left:0;height:2px;background:var(--ac);width:25%;transition:left .2s;}
+.nav-tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;cursor:pointer;
+  font-size:10px;color:var(--tx3);border:none;background:transparent;transition:color .15s;
+}
+.nav-tab.on{color:var(--ac);}
+.nav-tab-ico{font-size:19px;}
+
+/* 모바일 도면 탭 */
+.mob-view-tabs{
+  display:flex;background:var(--bg2);border-bottom:1px solid var(--brd);
+  position:sticky;top:0;z-index:10;flex-shrink:0;
+}
+.mvtab{
+  flex:1;padding:10px 4px;font-size:11px;text-align:center;
+  color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;
+}
+.mvtab.on{color:var(--ac);border-bottom-color:var(--ac);}
+.mob-cad-view{display:none;}
+.mob-cad-view.on{display:block;}
+.mob-svg{width:100%;display:block;}
+
+/* 공통 폼 컴포넌트 */
+.key-box{padding:13px;background:var(--bg3);border:1px solid var(--brd2);border-radius:10px;margin-bottom:14px;}
+.key-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.key-lbl{font-size:12px;color:var(--am);font-weight:500;}
+.key-badge{font-size:9px;padding:2px 7px;background:rgba(0,224,148,.1);border:1px solid rgba(0,224,148,.25);border-radius:7px;color:var(--gr);}
+.key-inp{
+  width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--brd2);
+  border-radius:6px;color:var(--tx);font-family:var(--mono);font-size:12px;outline:none;
+}
+.key-inp:focus{border-color:var(--ac);}
+.key-note{font-size:10px;color:var(--tx3);margin-top:6px;line-height:1.7;}
+.key-note a{color:var(--ac);text-decoration:none;}
+.save-row{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:11px;color:var(--tx2);}
+
+.up-area{
+  width:100%;padding:22px 14px;background:var(--bg3);
+  border:2px dashed var(--brd2);border-radius:10px;
+  cursor:pointer;text-align:center;transition:all .2s;margin-bottom:10px;
+  display:block;
+}
+.up-area:hover,.up-area:active{border-color:var(--ac);background:rgba(61,155,255,.04);}
+.up-ico{font-size:30px;margin-bottom:6px;}
+.up-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:4px;}
+.up-sub{font-size:11px;color:var(--tx2);line-height:1.6;}
+
+.prev-box{display:none;margin-bottom:12px;}
+.prev-img{width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1.5px solid var(--ac);display:block;}
+.prev-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+.prev-name{font-size:10px;color:var(--gr);font-family:var(--mono);}
+.prev-chg{font-size:11px;color:var(--ac);cursor:pointer;padding:3px 9px;border:1px solid var(--ac);border-radius:5px;}
+
+.hint-inp{
+  width:100%;padding:9px 11px;background:var(--bg3);border:1px solid var(--brd2);
+  border-radius:6px;color:var(--tx);font-family:var(--kr);font-size:13px;
+  outline:none;resize:none;margin-bottom:12px;display:block;
+}
+.hint-inp:focus{border-color:var(--ac);}
+.hint-inp::placeholder{color:var(--tx3);}
+
+.run-btn{
+  width:100%;padding:14px;background:var(--ac);color:#fff;
+  border:none;border-radius:9px;font-family:var(--kr);font-size:15px;
+  font-weight:700;cursor:pointer;display:block;margin-bottom:14px;
+  transition:opacity .15s;
+}
+.run-btn:hover{opacity:.88;}
+.run-btn:disabled{opacity:.3;cursor:not-allowed;}
+
+.steps{display:none;margin-bottom:14px;}
+.step{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:11px;color:var(--tx3);transition:color .2s;}
+.step.done{color:var(--gr);}
+.step.active{color:var(--ac);}
+.sdot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.step.active .sdot{animation:sd .7s infinite alternate;}
+@keyframes sd{to{opacity:.1}}
+
+.card{background:var(--bg3);border:1px solid var(--brd);border-radius:9px;padding:11px 13px;margin-bottom:9px;}
+.card-t{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--ac);margin-bottom:7px;}
+.crow{display:flex;justify-content:space-between;padding:2px 0;color:var(--tx2);font-size:11px;}
+.crow b{color:var(--tx);font-weight:500;}
+.tag{padding:1px 7px;border-radius:4px;font-size:10px;font-family:var(--mono);}
+.tg{background:rgba(0,224,148,.1);color:var(--gr);}
+.ta{background:rgba(255,184,0,.1);color:var(--am);}
+.tr{background:rgba(255,68,102,.1);color:var(--rd);}
+
+/* 모바일 저장 그리드 */
+.mob-save-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;}
+.mob-sBtn{
+  padding:14px 8px;font-size:13px;background:var(--bg3);
+  color:var(--tx2);border:1px solid var(--brd2);border-radius:9px;
+  cursor:pointer;text-align:center;transition:all .15s;font-family:var(--kr);
+}
+.mob-sBtn:active{border-color:var(--ac);color:var(--ac);}
+.mob-sBtn small{display:block;font-size:10px;color:var(--tx3);margin-top:3px;}
+
+/* 빈 상태 */
+.empty-state{padding:50px 20px;text-align:center;color:var(--tx3);font-size:12px;line-height:1.8;}
+.empty-ico{font-size:42px;opacity:.1;margin-bottom:12px;}
+
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div class="hdr">
+  <div class="logo">승언ENG <b>CAD</b><span class="logo-badge">GEMINI FREE</span></div>
+  <div class="hdr-st"><div class="hdr-dot"></div>AI 준비됨</div>
+</div>
+
+<!-- ══════════ PC 레이아웃 ══════════ -->
+<div class="pc" id="pc">
+
+  <!-- 왼쪽 입력 -->
+  <div class="pc-left">
+    <div class="pc-inner">
+
+      <div class="sec">STEP 1 — GEMINI API 키</div>
+      <div class="key-box">
+        <div class="key-hd"><span class="key-lbl">🔑 Gemini API 키</span><span class="key-badge">무료</span></div>
+        <input class="key-inp" id="key-pc" type="password" placeholder="AIzaSy..." oninput="syncKey('pc')">
+        <div class="key-note">무료 발급: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></div>
+        <label class="save-row">
+          <input type="checkbox" id="save-pc" onchange="onSave()">
+          이 브라우저에 키 저장
+        </label>
+      </div>
+
+      <div class="sec">STEP 2 — 도면 업로드</div>
+      <div class="up-area" id="up-pc" onclick="triggerUpload()">
+        <div class="up-ico">📷</div>
+        <div class="up-title" id="up-pc-txt">클릭해서 사진 선택</div>
+        <div class="up-sub">손그림·메모지·사진 모두 가능</div>
+      </div>
+      <div class="prev-box" id="prev-pc">
+        <img class="prev-img" id="pimg-pc" alt="">
+        <div class="prev-row">
+          <span class="prev-name" id="pname-pc"></span>
+          <span class="prev-chg" onclick="triggerUpload()">교체</span>
+        </div>
+      </div>
+
+      <div class="sec">STEP 3 — 힌트 (선택)</div>
+      <textarea class="hint-inp" id="hint-pc" rows="2"
+        placeholder="예) 연필꽂이 가로 150mm&#10;예) 가운데 원은 구멍"></textarea>
+
+      <div class="sec">STEP 4 — 변환</div>
+      <button class="run-btn" id="run-pc" onclick="run()" disabled>▶ CAD 도면으로 변환</button>
+
+      <div class="steps" id="steps-pc">
+        <div class="step" id="sp1"><div class="sdot"></div>🔍 모델 확인 중...</div>
+        <div class="step" id="sp2"><div class="sdot"></div>📐 형상 분석 중...</div>
+        <div class="step" id="sp3"><div class="sdot"></div>✏️ 도면 생성 중...</div>
+        <div class="step" id="sp4"><div class="sdot"></div>✅ 완료</div>
+      </div>
+
+      <div id="cards-pc"></div>
+    </div>
+  </div>
+
+  <!-- 오른쪽 CAD -->
+  <div class="pc-right">
+    <!-- 툴바 -->
+    <div class="cad-bar">
+      <button class="cbar on" id="tb-4"    onclick="setLayout('4')">4분할</button>
+      <button class="cbar"    id="tb-f"    onclick="setLayout('f')">정면 전체</button>
+      <button class="cbar"                 onclick="fitViews()">맞춤</button>
+      <div style="width:1px;height:18px;background:var(--brd);margin:0 2px;"></div>
+      <button class="cbar"    id="tb-cad"  onclick="setMode('cad')">CAD 2D</button>
+      <button class="cbar"    id="tb-3d"   onclick="setMode('3d')">3D 입체</button>
+      <div class="cbar-ml dim-row">
+        <input type="checkbox" id="dim-chk" checked onchange="toggleDim()">
+        <label for="dim-chk">치수선</label>
+      </div>
+    </div>
+    <!-- CAD 뷰 -->
+    <div class="cad-grid" id="cad-grid">
+      <div class="cview" id="cv-front">
+        <div class="cview-lbl">FRONT — 정면도</div>
+        <svg id="svg-front"></svg>
+        <div class="cview-empty" id="ce-front">
+          <div class="cview-empty-ico">⬜</div>
+          <div class="cview-empty-msg">① API 키 입력<br>② 사진 업로드<br>③ 변환 버튼 클릭</div>
+        </div>
+      </div>
+      <div class="cview" id="cv-side">
+        <div class="cview-lbl">SIDE — 측면도</div>
+        <svg id="svg-side"></svg>
+        <div class="cview-empty" id="ce-side"></div>
+      </div>
+      <div class="cview" id="cv-top">
+        <div class="cview-lbl">TOP — 평면도</div>
+        <svg id="svg-top"></svg>
+        <div class="cview-empty" id="ce-top"></div>
+      </div>
+      <div class="cview" id="cv-3d">
+        <div class="cview-lbl">ISO — 등각도</div>
+        <canvas id="canvas-3d"></canvas>
+        <div class="cview-empty" id="ce-3d"></div>
+      </div>
+    </div>
+    <!-- 저장 바 -->
+    <div class="save-bar">
+      <button class="sbar-btn" onclick="saveSVG()">📐 SVG 저장</button>
+      <button class="sbar-btn" onclick="saveDXF()">📄 DXF 저장</button>
+      <button class="sbar-btn" onclick="saveOBJ()">📦 OBJ 저장</button>
+      <button class="sbar-btn" onclick="savePNG()">🖼 PNG 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 모바일 레이아웃 ══════════ -->
+<div class="mob" id="mob">
+  <div class="mob-pages">
+
+    <!-- 페이지0: 입력 -->
+    <div class="mob-page on" id="mp-0">
+      <div class="mob-inner">
+        <div class="sec">STEP 1 — GEMINI API 키</div>
+        <div class="key-box">
+          <div class="key-hd"><span class="key-lbl">🔑 Gemini API 키</span><span class="key-badge">무료</span></div>
+          <input class="key-inp" id="key-m" type="password" placeholder="AIzaSy..." oninput="syncKey('m')">
+          <div class="key-note">무료 발급: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>Google 로그인 → Create API key</div>
+          <label class="save-row">
+            <input type="checkbox" id="save-m" onchange="onSave()">
+            이 브라우저에 키 저장
+          </label>
+        </div>
+
+        <div class="sec">STEP 2 — 도면 사진 업로드</div>
+        <div class="up-area" id="up-m" onclick="triggerUpload()">
+          <div class="up-ico">📷</div>
+          <div class="up-title" id="up-m-txt">여기를 눌러서 사진 선택</div>
+          <div class="up-sub">손그림·메모지·카메라 촬영 모두 OK</div>
+        </div>
+        <div class="prev-box" id="prev-m">
+          <img class="prev-img" id="pimg-m" alt="">
+          <div class="prev-row">
+            <span class="prev-name" id="pname-m"></span>
+            <span class="prev-chg" onclick="triggerUpload()">📷 교체</span>
+          </div>
+        </div>
+
+        <div class="sec">STEP 3 — 힌트 (선택)</div>
+        <textarea class="hint-inp" id="hint-m" rows="2"
+          placeholder="예) 연필꽂이 가로 150mm&#10;예) 가운데 원은 구멍"></textarea>
+
+        <div class="sec">STEP 4 — 변환</div>
+        <button class="run-btn" id="run-m" onclick="run()" disabled>▶ CAD 도면으로 변환</button>
+
+        <div class="steps" id="steps-m">
+          <div class="step" id="sm1"><div class="sdot"></div>🔍 모델 확인 중...</div>
+          <div class="step" id="sm2"><div class="sdot"></div>📐 형상 분석 중...</div>
+          <div class="step" id="sm3"><div class="sdot"></div>✏️ 도면 생성 중...</div>
+          <div class="step" id="sm4"><div class="sdot"></div>✅ 완료</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 페이지1: 도면 -->
+    <div class="mob-page" id="mp-1">
+      <div class="mob-view-tabs">
+        <div class="mvtab on" onclick="mobView('front',this)">정면도</div>
+        <div class="mvtab"    onclick="mobView('side',this)">측면도</div>
+        <div class="mvtab"    onclick="mobView('top',this)">평면도</div>
+        <div class="mvtab"    onclick="mobView('3d',this)">3D</div>
+      </div>
+      <div class="mob-cad-view on" id="mcv-front">
+        <svg class="mob-svg" id="msvg-front"></svg>
+        <div class="empty-state" id="mce-front"><div class="empty-ico">📐</div>변환 후 도면이 표시됩니다</div>
+      </div>
+      <div class="mob-cad-view" id="mcv-side">
+        <svg class="mob-svg" id="msvg-side"></svg>
+      </div>
+      <div class="mob-cad-view" id="mcv-top">
+        <svg class="mob-svg" id="msvg-top"></svg>
+      </div>
+      <div class="mob-cad-view" id="mcv-3d">
+        <div style="width:100%;aspect-ratio:4/3;position:relative;">
+          <canvas id="mcanvas-3d" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+        </div>
+        <div class="empty-state" id="mce-3d"><div class="empty-ico">🧊</div>변환 후 3D가 표시됩니다</div>
+      </div>
+    </div>
+
+    <!-- 페이지2: 결과 -->
+    <div class="mob-page" id="mp-2">
+      <div class="mob-inner" id="cards-m">
+        <div class="empty-state"><div class="empty-ico">📋</div>변환 후 분석 결과가<br>여기에 표시됩니다</div>
+      </div>
+    </div>
+
+    <!-- 페이지3: 저장 -->
+    <div class="mob-page" id="mp-3">
+      <div class="mob-save-grid">
+        <button class="mob-sBtn" onclick="saveSVG()">📐 SVG<small>CAD 호환</small></button>
+        <button class="mob-sBtn" onclick="saveDXF()">📄 DXF<small>AutoCAD</small></button>
+        <button class="mob-sBtn" onclick="saveOBJ()">📦 OBJ<small>3D/프린터</small></button>
+        <button class="mob-sBtn" onclick="savePNG()">🖼 PNG<small>이미지</small></button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 하단 네비 -->
+  <div class="mob-nav">
+    <div class="mob-nav-bar" id="mnbar"></div>
+    <button class="nav-tab on" id="nt0" onclick="goTab(0)"><div class="nav-tab-ico">✏️</div>입력</button>
+    <button class="nav-tab"    id="nt1" onclick="goTab(1)"><div class="nav-tab-ico">📐</div>도면</button>
+    <button class="nav-tab"    id="nt2" onclick="goTab(2)"><div class="nav-tab-ico">📋</div>결과</button>
+    <button class="nav-tab"    id="nt3" onclick="goTab(3)"><div class="nav-tab-ico">💾</div>저장</button>
+  </div>
+</div>
+
+<!-- 파일 입력 (DOM 최하단 단독 배치) -->
+<input type="file" id="file-inp" accept="image/*"
+  style="position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;"
+  onchange="onFileChange(this)">
+
+<script>
+'use strict';
+// ─────────────────────────────
+// 상태
+// ─────────────────────────────
+let B64 = null, MIME = 'image/jpeg', CAD = null;
+let LAYOUT = '4', MODE = 'both', SHOWDIM = true;
+const isPC = () => window.innerWidth >= 769;
+
+// ─────────────────────────────
+// 초기화
+// ─────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const k = localStorage.getItem('gk');
+  if (k) {
+    const kpc = document.getElementById('key-pc');
+    const km  = document.getElementById('key-m');
+    if (kpc) { kpc.value = k; document.getElementById('save-pc').checked = true; }
+    if (km)  { km.value  = k; document.getElementById('save-m').checked  = true; }
+  }
+  checkReady();
+});
+
+// ─────────────────────────────
+// 모바일 탭
+// ─────────────────────────────
+function goTab(i) {
+  [0,1,2,3].forEach(n => {
+    document.getElementById('mp-'+n).classList.toggle('on', n===i);
+    document.getElementById('nt'+n).classList.toggle('on', n===i);
+  });
+  document.getElementById('mnbar').style.left = (i*25)+'%';
+}
+
+function mobView(v, el) {
+  document.querySelectorAll('.mvtab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.mob-cad-view').forEach(c => c.classList.remove('on'));
+  document.getElementById('mcv-'+v).classList.add('on');
+}
+
+// ─────────────────────────────
+// API 키
+// ─────────────────────────────
+function syncKey(from) {
+  const val = document.getElementById('key-'+from).value;
+  const other = from === 'pc' ? 'm' : 'pc';
+  const el = document.getElementById('key-'+other);
+  if (el) el.value = val;
+  const chk = isPC()
+    ? document.getElementById('save-pc').checked
+    : document.getElementById('save-m').checked;
+  if (chk) localStorage.setItem('gk', val.trim());
+  checkReady();
+}
+
+function onSave() {
+  const k = getKey();
+  const pc = document.getElementById('save-pc');
+  const m  = document.getElementById('save-m');
+  const checked = (pc && pc.checked) || (m && m.checked);
+  if (pc) pc.checked = checked;
+  if (m)  m.checked  = checked;
+  if (checked && k) localStorage.setItem('gk', k);
+  else localStorage.removeItem('gk');
+}
+
+function getKey() {
+  const el = isPC()
+    ? document.getElementById('key-pc')
+    : document.getElementById('key-m');
+  return el ? el.value.trim() : '';
+}
+
+function getHint() {
+  const el = isPC()
+    ? document.getElementById('hint-pc')
+    : document.getElementById('hint-m');
+  return el ? el.value.trim() : '';
+}
+
+function checkReady() {
+  const ok = getKey().length > 10 && !!B64;
+  ['run-pc','run-m'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !ok;
+  });
+}
+
+// ─────────────────────────────
+// 파일 업로드
+// ─────────────────────────────
+function triggerUpload() {
+  const inp = document.getElementById('file-inp');
+  inp.value = '';
+  inp.click();
+}
+
+function onFileChange(inp) {
+  const file = inp.files[0];
+  if (!file) return;
+  MIME = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const src = ev.target.result;
+    B64 = src.split(',')[1];
+    const info = '✓ ' + file.name + ' (' + Math.round(file.size/1024) + 'KB)';
+
+    // PC 미리보기
+    const pp = document.getElementById('prev-pc');
+    if (pp) {
+      pp.style.display = 'block';
+      document.getElementById('pimg-pc').src = src;
+      document.getElementById('pname-pc').textContent = info;
+      document.getElementById('up-pc-txt').textContent = '사진 선택됨 ✓';
+      document.getElementById('up-pc').style.borderColor = 'var(--gr)';
+    }
+    // 모바일 미리보기
+    const pm = document.getElementById('prev-m');
+    if (pm) {
+      pm.style.display = 'block';
+      document.getElementById('pimg-m').src = src;
+      document.getElementById('pname-m').textContent = info;
+      document.getElementById('up-m-txt').textContent = '사진 선택됨 ✓';
+      document.getElementById('up-m').style.borderColor = 'var(--gr)';
+    }
+    checkReady();
+  };
+  reader.onerror = () => alert('파일 읽기 실패. JPG/PNG를 사용해주세요.');
+  reader.readAsDataURL(file);
+}
+
+// ─────────────────────────────
+// 진행 단계
+// ─────────────────────────────
+const PC_IDS = ['sp1','sp2','sp3','sp4'];
+const MB_IDS = ['sm1','sm2','sm3','sm4'];
+
+function resetSteps() {
+  [...PC_IDS,...MB_IDS].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'step';
+  });
+}
+function showSteps() {
+  ['steps-pc','steps-m'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'block';
+  });
+}
+function stepDone(i) {
+  if (i > 0) {
+    const pa = document.getElementById(PC_IDS[i-1]); if (pa) pa.className = 'step done';
+    const ma = document.getElementById(MB_IDS[i-1]); if (ma) ma.className = 'step done';
+  }
+  if (i < 4) {
+    const pb = document.getElementById(PC_IDS[i]); if (pb) pb.className = 'step active';
+    const mb = document.getElementById(MB_IDS[i]); if (mb) mb.className = 'step active';
+  }
+}
+function setBtns(txt, dis) {
+  ['run-pc','run-m'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = txt; el.disabled = dis; }
+  });
+}
+
+// ─────────────────────────────
+// Gemini API
+// ─────────────────────────────
+const PROMPT = `[필수] 순수 JSON만 출력. 마크다운 절대 금지. 첫글자 { 마지막글자 }
+당신은 CAD 엔지니어. 도면 이미지를 분석해 아래 형식 JSON으로만 응답:
+{"title":"한국어명칭","unit":"mm","scale_basis":"100mm 기준","overall":{"w":100,"h":60,"d":20},"shapes":[{"id":"S1","name":"이름","type":"rect","layer":"OUTLINE","hole":false,"x":0,"y":0,"w":100,"h":60,"r":null,"depth":20,"estimated":true,"confidence":"high","note":""}],"conversion_notes":[]}
+규칙: mm단위, 추정값 estimated:true, 원형내부=hole:true, 깊이없으면 폭x0.2 최소1mm, 이름은 한국어`;
+
+async function run() {
+  const key = getKey();
+  if (!key || !B64) return;
+
+  setBtns('변환 중...', true);
+  showSteps(); resetSteps(); stepDone(0);
+
+  const hint = getHint();
+  const userText = hint
+    ? `이 도면 변환. 힌트: ${hint}`
+    : `이 도면을 CAD 데이터로 변환. 폭 100mm 기준.`;
+
+  // 모델 조회
+  const getModels = async () => {
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      if (!r.ok) return null;
+      const d = await r.json();
+      return (d.models || [])
+        .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+        .map(m => m.name.replace('models/',''))
+        .filter(m => m.includes('flash'))
+        .sort((a,b) => b.localeCompare(a));
+    } catch { return null; }
+  };
+
+  const callAPI = async (model) => fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+    {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { inline_data: { mime_type: MIME, data: B64 } },
+          { text: PROMPT + '\n\n' + userText }
+        ]}],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1500 }
+      })
+    }
+  );
+
+  try {
+    setBtns('모델 확인 중...', true);
+    let models = await getModels() || ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash'];
+    stepDone(1);
+
+    let res = null, ok = false;
+    for (const model of models) {
+      setBtns(model + '...', true);
+      try { res = await callAPI(model); } catch { continue; }
+      if (res.status === 429 || res.status === 404) {
+        await new Promise(r => setTimeout(r, 800)); continue;
+      }
+      if (res.status === 400) {
+        const e = await res.json();
+        if ((e.error?.message||'').includes('API key'))
+          throw new Error('API 키가 올바르지 않습니다.');
+        continue;
+      }
+      if (res.ok) { ok = true; break; }
+    }
+    if (!ok) throw new Error('잠시 후 다시 시도해주세요. (무료 한도 초과)');
+    stepDone(2);
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!text) throw new Error('응답이 비어있습니다. 다시 시도해주세요.');
+
+    let json;
+    try {
+      let s = text.replace(/```json|```/gi, '').trim();
+      const a = s.indexOf('{'), b = s.lastIndexOf('}');
+      if (a !== -1 && b !== -1) s = s.slice(a, b+1);
+      json = JSON.parse(s);
+    } catch {
+      json = {
+        title:'분석 형상', unit:'mm', scale_basis:'100mm 기준',
+        overall:{w:100,h:60,d:20},
+        shapes:[{id:'S1',name:'외곽형상',type:'rect',layer:'OUTLINE',
+          hole:false,x:0,y:0,w:100,h:60,r:null,depth:20,estimated:true,
+          confidence:'low',note:'파싱 오류'}],
+        conversion_notes:['응답 파싱 실패 — 힌트 추가 후 재시도']
+      };
+    }
+
+    stepDone(3); CAD = json;
+    setTimeout(() => {
+      stepDone(4);
+      renderAll(json);
+      renderCards(json);
+      setBtns('▶ 다시 변환', false);
+      if (!isPC()) goTab(1); // 모바일: 도면 탭으로
+    }, 300);
+
+  } catch (err) {
+    alert('오류: ' + err.message);
+    setBtns('▶ CAD 도면으로 변환', false);
+    resetSteps();
+  }
+}
+
+// ─────────────────────────────
+// PC 레이아웃 제어
+// ─────────────────────────────
+function setLayout(mode) {
+  LAYOUT = mode;
+  ['4','f'].forEach(m => document.getElementById('tb-'+m)?.classList.toggle('on', m===mode));
+
+  const grid = document.getElementById('cad-grid');
+  if (!grid) return;
+
+  if (mode === 'f') {
+    grid.style.gridTemplateColumns = '1fr';
+    grid.style.gridTemplateRows = '1fr';
+    ['side','top','3d'].forEach(v => {
+      const el = document.getElementById('cv-'+v);
+      if (el) el.style.display = 'none';
+    });
+    const fc = document.getElementById('cv-front');
+    if (fc) fc.style.display = '';
+  } else {
+    grid.style.gridTemplateColumns = '1fr 1fr';
+    grid.style.gridTemplateRows = '1fr 1fr';
+    ['front','side','top','3d'].forEach(v => {
+      const el = document.getElementById('cv-'+v);
+      if (el) el.style.display = '';
+    });
+  }
+  if (CAD) setTimeout(() => renderPCSVGs(CAD), 50);
+}
+
+function setMode(mode) {
+  MODE = mode;
+  ['cad','3d'].forEach(m => document.getElementById('tb-'+m)?.classList.toggle('on', m===mode));
+
+  const grid = document.getElementById('cad-grid');
+  if (!grid) return;
+
+  if (mode === '3d') {
+    // 3D만 표시
+    grid.style.gridTemplateColumns = '1fr';
+    grid.style.gridTemplateRows = '1fr';
+    ['front','side','top'].forEach(v => {
+      const el = document.getElementById('cv-'+v);
+      if (el) el.style.display = 'none';
+    });
+    const el3 = document.getElementById('cv-3d');
+    if (el3) el3.style.display = '';
+    if (CAD) build3D(CAD, 'canvas-3d');
+  } else {
+    // CAD 2D - 레이아웃 복원
+    setLayout(LAYOUT);
+  }
+}
+
+function fitViews() {
+  if (CAD) renderAll(CAD);
+}
+
+function toggleDim() {
+  SHOWDIM = document.getElementById('dim-chk').checked;
+  if (CAD) renderAll(CAD);
+}
+
+// ─────────────────────────────
+// SVG 렌더링
+// ─────────────────────────────
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs) {
+  const el = document.createElementNS(SVG_NS, tag);
+  if (attrs) Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k,v));
+  return el;
+}
+
+function drawCAD(vid, j, svg, W, H) {
+  svg.innerHTML = '';
+  const PAD = 54;
+  const ov = j.overall || {w:100,h:60,d:20};
+  let VW, VH, lW, lH;
+  if (vid==='front')     { VW=ov.w; VH=ov.h; lW=ov.w; lH=ov.h; }
+  else if (vid==='side') { VW=ov.d; VH=ov.h; lW=ov.d; lH=ov.h; }
+  else                   { VW=ov.w; VH=ov.d; lW=ov.w; lH=ov.d; }
+
+  const sc = Math.min((W-PAD*2)/Math.max(VW,1), (H-PAD*2)/Math.max(VH,1), 6);
+  const ox = (W-VW*sc)/2, oy = (H-VH*sc)/2;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width',  W);
+  svg.setAttribute('height', H);
+
+  // 격자
+  const gg = svgEl('g');
+  for (let x=0; x<W; x+=20)
+    gg.appendChild(svgEl('line',{x1:x,y1:0,x2:x,y2:H,stroke:'#151d2a','stroke-width':'.5'}));
+  for (let y=0; y<H; y+=20)
+    gg.appendChild(svgEl('line',{x1:0,y1:y,x2:W,y2:y,stroke:'#151d2a','stroke-width':'.5'}));
+  svg.appendChild(gg);
+
+  // 중심선
+  svg.appendChild(svgEl('line',{x1:0,y1:H/2,x2:W,y2:H/2,stroke:'#1a3050','stroke-width':'.6','stroke-dasharray':'9,4'}));
+  svg.appendChild(svgEl('line',{x1:W/2,y1:0,x2:W/2,y2:H,stroke:'#1a3050','stroke-width':'.6','stroke-dasharray':'9,4'}));
+
+  // 외곽
+  svg.appendChild(svgEl('rect',{x:ox,y:oy,width:VW*sc,height:VH*sc,
+    fill:'rgba(61,155,255,.05)',stroke:'#3d9bff','stroke-width':'1.6'}));
+
+  // 형상
+  (j.shapes||[]).forEach(s => {
+    const stk = s.hole ? '#ff4466' : '#3d9bff';
+    const fil = s.hole ? 'rgba(255,68,102,.05)' : 'rgba(61,155,255,.08)';
+    const dsh = s.hole ? '5,3' : 'none';
+
+    if (s.type === 'circle') {
+      const br = s.r || (s.w||50)/2;
+      const cx = ox + ((s.x||0)+br)*sc;
+      const cy = oy + ((s.y||0)+br)*sc;
+      const cr = Math.max(br*sc, 1);
+      svg.appendChild(svgEl('circle',{cx,cy,r:cr,fill:fil,stroke:stk,'stroke-width':'1.3','stroke-dasharray':dsh}));
+      svg.appendChild(svgEl('line',{x1:cx-cr-8,y1:cy,x2:cx+cr+8,y2:cy,stroke:'#1a3f5c','stroke-width':'.7','stroke-dasharray':'5,3'}));
+      svg.appendChild(svgEl('line',{x1:cx,y1:cy-cr-8,x2:cx,y2:cy+cr+8,stroke:'#1a3f5c','stroke-width':'.7','stroke-dasharray':'5,3'}));
+    } else {
+      let rx = ox+(s.x||0)*sc, ry = oy+(s.y||0)*sc, rw, rh;
+      if (vid==='front')     { rw=(s.w||100)*sc;  rh=(s.h||60)*sc; }
+      else if (vid==='side') { rw=(s.depth||20)*sc; rh=(s.h||60)*sc; }
+      else                   { rw=(s.w||100)*sc;  rh=(s.depth||20)*sc; }
+      if (Math.abs(rw)<1 || Math.abs(rh)<1) return;
+
+      if (vid==='front' && !s.hole) {
+        const cid = 'cp'+s.id+vid;
+        const defs = svgEl('defs');
+        const cp = svgEl('clipPath',{id:cid});
+        cp.appendChild(svgEl('rect',{x:rx,y:ry,width:Math.abs(rw),height:Math.abs(rh)}));
+        defs.appendChild(cp); svg.appendChild(defs);
+        const hg = svgEl('g',{'clip-path':`url(#${cid})`});
+        for (let hi=0; hi<Math.abs(rw)+Math.abs(rh); hi+=10)
+          hg.appendChild(svgEl('line',{x1:rx+hi,y1:ry,x2:rx,y2:ry+hi,stroke:'rgba(61,155,255,.06)','stroke-width':'1'}));
+        svg.appendChild(hg);
+      }
+      svg.appendChild(svgEl('rect',{x:rx,y:ry,width:Math.abs(rw),height:Math.abs(rh),
+        fill:fil,stroke:stk,'stroke-width':'1.5','stroke-dasharray':dsh}));
+    }
+  });
+
+  // 치수선
+  if (!SHOWDIM) return;
+  const ac = '#ffb800', OF = 28;
+  const right = ox+VW*sc, bot = oy+VH*sc;
+  const mid = vid+W; // 고유 ID
+
+  if (!svg.querySelector('#ar'+mid)) {
+    const d = svgEl('defs');
+    const mk = svgEl('marker',{id:'ar'+mid,markerWidth:'5',markerHeight:'5',refX:'2.5',refY:'2.5',orient:'auto'});
+    mk.appendChild(svgEl('path',{d:'M0,0 L0,5 L5,2.5 z',fill:ac}));
+    d.appendChild(mk); svg.appendChild(d);
+  }
+
+  const yy = bot+OF;
+  svg.appendChild(svgEl('line',{x1:ox,   y1:yy-6,x2:ox,   y2:yy+6,stroke:ac,'stroke-width':'.8'}));
+  svg.appendChild(svgEl('line',{x1:right,y1:yy-6,x2:right,y2:yy+6,stroke:ac,'stroke-width':'.8'}));
+  svg.appendChild(svgEl('line',{x1:ox,y1:yy,x2:right,y2:yy,stroke:ac,'stroke-width':'1','marker-start':'url(#ar'+mid+')','marker-end':'url(#ar'+mid+')'}));
+  const tw = svgEl('text',{x:(ox+right)/2,y:yy+14,'text-anchor':'middle',fill:ac,'font-size':'11','font-family':'JetBrains Mono,monospace'});
+  tw.textContent = lW+'mm'; svg.appendChild(tw);
+
+  const xx = right+OF;
+  svg.appendChild(svgEl('line',{x1:xx-6,y1:oy, x2:xx+6,y2:oy, stroke:ac,'stroke-width':'.8'}));
+  svg.appendChild(svgEl('line',{x1:xx-6,y1:bot,x2:xx+6,y2:bot,stroke:ac,'stroke-width':'.8'}));
+  svg.appendChild(svgEl('line',{x1:xx,y1:oy,x2:xx,y2:bot,stroke:ac,'stroke-width':'1','marker-start':'url(#ar'+mid+')','marker-end':'url(#ar'+mid+')'}));
+  const th = svgEl('text',{x:xx+12,y:(oy+bot)/2+4,'text-anchor':'start',fill:ac,'font-size':'11','font-family':'JetBrains Mono,monospace'});
+  th.textContent = lH+'mm'; svg.appendChild(th);
+}
+
+// ─────────────────────────────
+// 렌더 - 전체
+// ─────────────────────────────
+function renderAll(j) {
+  renderPCSVGs(j);
+  renderMobSVGs(j);
+  build3D(j, 'canvas-3d');
+  build3D(j, 'mcanvas-3d');
+
+  // empty 숨기기
+  ['front','side','top','3d'].forEach(v => {
+    const e = document.getElementById('ce-'+v);
+    if (e) e.style.display = 'none';
+    const me = document.getElementById('mce-'+v);
+    if (me) me.style.display = 'none';
+  });
+}
+
+function renderPCSVGs(j) {
+  ['front','side','top'].forEach(v => {
+    const svg  = document.getElementById('svg-'+v);
+    const cell = document.getElementById('cv-'+v);
+    if (!svg || !cell) return;
+    const W = cell.clientWidth  || 400;
+    const H = cell.clientHeight || 300;
+    drawCAD(v, j, svg, W, H);
+  });
+}
+
+function renderMobSVGs(j) {
+  ['front','side','top'].forEach(v => {
+    const svg = document.getElementById('msvg-'+v);
+    if (!svg) return;
+    const W = window.innerWidth || 375;
+    const H = Math.round(W * 0.75);
+    svg.style.height = H + 'px';
+    drawCAD(v, j, svg, W, H);
+  });
+}
+
+// ─────────────────────────────
+// Three.js 3D
+// ─────────────────────────────
+const T = {}; // 렌더러 저장소
+let isDrag = false, lastMouse = {x:0,y:0}, rotX = 0.3, rotY = 0.5;
+
+function build3D(j, canvasId) {
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const parent = c.parentElement;
+  const W = parent.clientWidth  || 400;
+  const H = parent.clientHeight || Math.round(W * 0.75);
+
+  if (!T[canvasId]) {
+    const ren = new THREE.WebGLRenderer({canvas:c, antialias:true});
+    ren.setClearColor(0x09090f, 1);
+    const sc  = new THREE.Scene();
+    const cam = new THREE.PerspectiveCamera(40, W/Math.max(H,1), 0.1, 2000);
+    cam.position.set(4,3,5); cam.lookAt(0,0,0);
+    sc.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const dl = new THREE.DirectionalLight(0x3d9bff, 0.8);
+    dl.position.set(5,8,5); sc.add(dl);
+    sc.add(new THREE.GridHelper(10,20,0x1d2535,0x1d2535));
+    sc.add(new THREE.AxesHelper(1.5));
+    const grp = new THREE.Group(); sc.add(grp);
+    T[canvasId] = {ren,sc,cam,grp,aR:true};
+
+    // 드래그
+    const onDown = e => {
+      isDrag = true;
+      lastMouse = {x:e.clientX||e.touches?.[0]?.clientX, y:e.clientY||e.touches?.[0]?.clientY};
+      T[canvasId].aR = false;
+    };
+    const onMove = e => {
+      if (!isDrag) return;
+      const cx = e.clientX||e.touches?.[0]?.clientX;
+      const cy = e.clientY||e.touches?.[0]?.clientY;
+      rotY += (cx-lastMouse.x)*0.01;
+      rotX += (cy-lastMouse.y)*0.01;
+      lastMouse = {x:cx,y:cy};
+      grp.rotation.y = rotY; grp.rotation.x = rotX;
+    };
+    const onUp = () => { isDrag = false; };
+    c.addEventListener('mousedown', onDown);
+    c.addEventListener('mousemove', onMove);
+    c.addEventListener('mouseup', onUp);
+    c.addEventListener('touchstart', e => onDown(e.touches[0]), {passive:true});
+    c.addEventListener('touchmove',  e => onMove(e.touches[0]), {passive:true});
+    c.addEventListener('touchend', onUp, {passive:true});
+    c.addEventListener('wheel', e => {
+      cam.position.multiplyScalar(1 + e.deltaY*0.001);
+    }, {passive:true});
+
+    (function anim() {
+      requestAnimationFrame(anim);
+      const t = T[canvasId];
+      if (t && t.aR) t.grp.rotation.y += 0.005;
+      if (t) t.ren.render(t.sc, t.cam);
+    })();
+  }
+
+  const t = T[canvasId];
+  t.ren.setSize(W, H);
+  t.cam.aspect = W/Math.max(H,1);
+  t.cam.updateProjectionMatrix();
+
+  // 메쉬 초기화
+  while (t.grp.children.length) t.grp.remove(t.grp.children[0]);
+
+  const SC = 0.04;
+  const ov = j.overall || {w:100,h:60,d:20};
+  const COLS = [0x3d9bff,0x00e094,0xffb800,0xff4466,0xa78bfa];
+  let ci = 0;
+
+  // 베이스 박스
+  const bg = new THREE.BoxGeometry(ov.w*SC, ov.d*SC, ov.h*SC);
+  const bm = new THREE.Mesh(bg,
+    new THREE.MeshPhongMaterial({color:COLS[ci++%COLS.length],transparent:true,opacity:.2,side:THREE.DoubleSide}));
+  bm.add(new THREE.LineSegments(
+    new THREE.EdgesGeometry(bg),
+    new THREE.LineBasicMaterial({color:0x3d9bff,transparent:true,opacity:.6})));
+  t.grp.add(bm);
+
+  // 개별 형상
+  (j.shapes||[]).slice(1).forEach(s => {
+    const col = COLS[ci++%COLS.length];
+    const mat = new THREE.MeshPhongMaterial({color:col,transparent:true,opacity:s.hole?.12:.72,wireframe:s.hole});
+    const sw = (s.w||50)*SC, sh = (s.h||30)*SC, sd = (s.depth||10)*SC, sr = (s.r||20)*SC;
+    const px = ((s.x||0)+(s.w||50)/2)*SC - ov.w*SC/2;
+    const pz = ((s.y||0)+(s.h||30)/2)*SC - ov.h*SC/2;
+    const py = ov.d*SC/2 + sd/2;
+    let geo, mesh;
+    if (s.type === 'circle') {
+      geo  = new THREE.CylinderGeometry(sr,sr*.95,Math.max(sd,.02),32);
+      mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(((s.x||0)+(s.r||20))*SC - ov.w*SC/2, py, ((s.y||0)+(s.r||20))*SC - ov.h*SC/2);
+    } else {
+      geo  = new THREE.BoxGeometry(Math.max(sw,.01),Math.max(sd,.01),Math.max(sh,.01));
+      mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(px, py, pz);
+    }
+    if (mesh) {
+      if (!s.hole) mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color:col})));
+      t.grp.add(mesh);
+    }
+  });
+
+  t.grp.position.y = -(ov.d||20)*SC/2;
+  t.grp.rotation.x = 0.3; t.grp.rotation.y = 0.5;
+}
+
+// ─────────────────────────────
+// 결과 카드
+// ─────────────────────────────
+function renderCards(j) {
+  const ov = j.overall || {};
+  let html = `<div class="card">
+    <div class="card-t">📐 ${j.title||'분석 결과'}</div>
+    <div class="crow"><span>전체 크기</span><b>${ov.w}×${ov.h}×${ov.d} mm</b></div>
+    <div class="crow"><span>스케일</span><b>${j.scale_basis||'100mm 기준'}</b></div>
+    <div class="crow"><span>형상 수</span><b>${(j.shapes||[]).length}개</b></div>
+  </div>`;
+
+  (j.shapes||[]).forEach(s => {
+    const cc = s.confidence==='high'?'tg':s.confidence==='medium'?'ta':'tr';
+    const ck = {high:'높음',medium:'중간',low:'낮음'}[s.confidence]||'';
+    html += `<div class="card">
+      <div class="card-t">[${s.id}] ${s.name}</div>
+      <div class="crow"><span>치수</span><b>${s.w}×${s.h}×${s.depth}mm${s.r?` r=${s.r}`:''}</b></div>
+      <div class="crow"><span>종류</span><b>${s.type}·${s.hole?'구멍':'솔리드'}</b></div>
+      <div class="crow"><span>신뢰도</span><span class="tag ${cc}">${ck}${s.estimated?' 추정':''}</span></div>
+    </div>`;
+  });
+
+  if (j.conversion_notes?.length) {
+    html += `<div class="card" style="border-color:var(--am)">
+      <div class="card-t" style="color:var(--am)">⚠ 주의사항</div>
+      ${j.conversion_notes.map(n=>`<div class="crow"><b style="color:var(--am)">${n}</b></div>`).join('')}
+    </div>`;
+  }
+
+  const pc = document.getElementById('cards-pc'); if (pc) pc.innerHTML = html;
+  const m  = document.getElementById('cards-m');  if (m)  m.innerHTML  = html;
+}
+
+// ─────────────────────────────
+// 저장
+// ─────────────────────────────
+function dl(content, name, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type}));
+  a.download = name; a.click();
+}
+
+function getPCSVG() { return document.getElementById('svg-front'); }
+function getMobSVG(){ return document.getElementById('msvg-front'); }
+function getActiveSVG() { return isPC() ? getPCSVG() : getMobSVG(); }
+
+function saveSVG() {
+  if (!CAD) { alert('먼저 변환하세요'); return; }
+  const svg = getActiveSVG();
+  if (!svg) return;
+  dl('<?xml version="1.0"?>\n' + new XMLSerializer().serializeToString(svg),
+     '승언ENG_정면도.svg', 'image/svg+xml');
+}
+
+function savePNG() {
+  if (!CAD) { alert('먼저 변환하세요'); return; }
+  const svg = getActiveSVG();
+  if (!svg) return;
+  const s = new XMLSerializer().serializeToString(svg);
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width  = svg.clientWidth  * 2;
+    c.height = svg.clientHeight * 2;
+    const ctx = c.getContext('2d');
+    ctx.scale(2,2);
+    ctx.drawImage(img,0,0);
+    const a = document.createElement('a');
+    a.href = c.toDataURL('image/png');
+    a.download = '승언ENG_도면.png';
+    a.click();
+  };
+  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(s)));
+}
+
+function saveDXF() {
+  if (!CAD) { alert('먼저 변환하세요'); return; }
+  let dxf = `  0\nSECTION\n  2\nHEADER\n  9\n$INSUNITS\n 70\n4\n  0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n`;
+  (CAD.shapes||[]).forEach(s => {
+    const lay = s.hole ? 'HIDDEN' : 'OUTLINE';
+    if (s.type === 'circle') {
+      dxf += `  0\nCIRCLE\n  8\n${lay}\n 10\n${(s.x||0)+(s.r||25)}\n 20\n${(s.y||0)+(s.r||25)}\n 30\n0\n 40\n${s.r||25}\n`;
+    } else {
+      const x=s.x||0, y=s.y||0, w=s.w||100, h=s.h||60;
+      dxf += `  0\nLWPOLYLINE\n  8\n${lay}\n 90\n4\n 70\n1\n`;
+      [[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(v => dxf += ` 10\n${v[0]}\n 20\n${v[1]}\n`);
+    }
+  });
+  dxf += `  0\nENDSEC\n  0\nEOF`;
+  dl(dxf, '승언ENG_도면.dxf', 'text/plain');
+}
+
+function saveOBJ() {
+  if (!CAD) { alert('먼저 변환하세요'); return; }
+  const o = CAD.overall || {w:100,h:60,d:20};
+  let obj = '# 승언ENG OBJ 단위:mm CCW\n\n';
+  obj += `v 0 0 0\nv ${o.w} 0 0\nv ${o.w} ${o.h} 0\nv 0 ${o.h} 0\n`;
+  obj += `v 0 0 ${o.d}\nv ${o.w} 0 ${o.d}\nv ${o.w} ${o.h} ${o.d}\nv 0 ${o.h} ${o.d}\n\n`;
+  obj += 'f 1 2 3\nf 1 3 4\nf 5 7 6\nf 5 8 7\nf 1 6 2\nf 1 5 6\nf 2 7 3\nf 2 6 7\nf 3 8 4\nf 3 7 8\nf 4 5 1\nf 4 8 5\n';
+  dl(obj, '승언ENG_모델.obj', 'text/plain');
+}
+
+// 리사이즈
+window.addEventListener('resize', () => {
+  if (CAD) {
+    renderPCSVGs(CAD);
+    renderMobSVGs(CAD);
+  }
+  // Three.js 리사이즈
+  ['canvas-3d','mcanvas-3d'].forEach(id => {
+    const t = T[id]; if (!t) return;
+    const c = document.getElementById(id); if (!c) return;
+    const par = c.parentElement;
+    const W = par.clientWidth||400, H = par.clientHeight||300;
+    t.ren.setSize(W,H);
+    t.cam.aspect = W/Math.max(H,1);
+    t.cam.updateProjectionMatrix();
+  });
+});
+</script>
+</body>
+</html>
