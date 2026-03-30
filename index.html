@@ -6,7 +6,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>승언ENG CAD 변환기</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -18,7 +17,7 @@
 }
 html,body{height:100%;font-family:var(--kr);background:var(--bg);color:var(--tx);overflow:hidden;}
 
-/* ── 헤더 ── */
+/* 헤더 */
 #hdr{
   position:fixed;top:0;left:0;right:0;height:48px;z-index:300;
   display:flex;align-items:center;justify-content:space-between;
@@ -32,179 +31,149 @@ html,body{height:100%;font-family:var(--kr);background:var(--bg);color:var(--tx)
 .hdot{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:blink 2s infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 
-/* ── 전체 앱 컨테이너 ── */
-#app{position:fixed;top:48px;left:0;right:0;bottom:0;display:flex;flex-direction:column;}
+/* 앱 컨테이너 */
+#app{position:fixed;top:48px;left:0;right:0;bottom:0;}
 
-/* ══ PC 레이아웃 (769px+) ══ */
+/* PC: 좌우 분할 */
 @media(min-width:769px){
-  #app{flex-direction:row;}
-  #panel-left{width:300px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--brd);overflow-y:auto;background:var(--bg2);}
-  #panel-right{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+  #app{display:grid;grid-template-columns:300px 1fr;}
   #mob-nav{display:none;}
-  #mob-pages{display:contents;}
+  #mob-wrap{display:contents;}
   .mob-page{display:none!important;}
+  #left{display:flex;flex-direction:column;overflow-y:auto;border-right:1px solid var(--brd);background:var(--bg2);}
+  #right{display:flex;flex-direction:column;overflow:hidden;}
 }
 
-/* ══ 모바일 레이아웃 (768px-) ══ */
+/* 모바일: 상하 분할 */
 @media(max-width:768px){
-  #app{flex-direction:column;}
-  #panel-left{display:none;}
-  #panel-right{display:none;}
-  #mob-pages{flex:1;position:relative;overflow:hidden;}
+  #app{display:flex;flex-direction:column;}
+  #left{display:none;}
+  #right{display:none;}
+  #mob-wrap{flex:1;position:relative;overflow:hidden;}
   .mob-page{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;background:var(--bg);}
   .mob-page.on{display:block;}
   #mob-nav{height:52px;display:flex;flex-shrink:0;background:var(--bg2);border-top:1px solid var(--brd);position:relative;}
 }
 
-/* ── 왼쪽 패널 공통 ── */
-#panel-left{padding:14px;}
-.sec{font-size:9px;letter-spacing:2.5px;color:var(--ac);font-family:var(--mono);margin:14px 0 8px;}
+/* 왼쪽 입력 패널 */
+#left{padding:14px;}
+.sec{font-size:9px;letter-spacing:2px;color:var(--ac);font-family:var(--mono);margin:14px 0 8px;}
 .sec:first-child{margin-top:0;}
 
-/* 폼 컴포넌트 */
-.kbox{padding:12px;background:var(--bg3);border:1px solid var(--brd2);border-radius:9px;}
+.kbox{padding:12px;background:var(--bg3);border:1px solid var(--brd2);border-radius:9px;margin-bottom:2px;}
 .krow{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .klbl{font-size:12px;color:var(--am);font-weight:500;}
-.kbadge{font-size:9px;padding:2px 6px;background:rgba(0,224,148,.1);
-  border:1px solid rgba(0,224,148,.25);border-radius:6px;color:var(--gr);}
-.kinp{width:100%;padding:9px 10px;background:var(--bg);border:1px solid var(--brd2);
-  border-radius:6px;color:var(--tx);font-family:var(--mono);font-size:12px;
-  outline:none;-webkit-appearance:none;}
+.kbdg{font-size:9px;padding:2px 6px;background:rgba(0,224,148,.1);border:1px solid rgba(0,224,148,.25);border-radius:6px;color:var(--gr);}
+.kinp{width:100%;padding:9px 10px;background:var(--bg);border:1px solid var(--brd2);border-radius:6px;color:var(--tx);font-family:var(--mono);font-size:12px;outline:none;}
 .kinp:focus{border-color:var(--ac);}
 .knote{font-size:10px;color:var(--tx3);margin-top:6px;line-height:1.7;}
 .knote a{color:var(--ac);text-decoration:none;}
 .srow{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:11px;color:var(--tx2);}
 input[type=checkbox]{accent-color:var(--ac);}
 
-.ubtn{width:100%;padding:20px 14px;background:var(--bg3);border:2px dashed var(--brd2);
-  border-radius:9px;cursor:pointer;text-align:center;transition:all .2s;display:block;}
+.ubtn{width:100%;padding:18px 14px;background:var(--bg3);border:2px dashed var(--brd2);
+  border-radius:9px;cursor:pointer;text-align:center;transition:all .2s;display:block;margin-bottom:8px;}
 .ubtn:hover,.ubtn:active{border-color:var(--ac);background:rgba(61,155,255,.04);}
-.uico{font-size:28px;margin-bottom:6px;}
+.uico{font-size:26px;margin-bottom:5px;}
 .utitle{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:3px;}
 .usub{font-size:11px;color:var(--tx2);}
 
-.pvbox{display:none;margin-top:10px;}
-.pvimg{width:100%;max-height:180px;object-fit:contain;border-radius:7px;
-  border:1.5px solid var(--ac);display:block;}
+.pvbox{display:none;margin-bottom:10px;}
+.pvimg{width:100%;max-height:160px;object-fit:contain;border-radius:7px;border:1.5px solid var(--ac);display:block;}
 .pvrow{display:flex;align-items:center;justify-content:space-between;margin-top:5px;}
 .pvname{font-size:10px;color:var(--gr);font-family:var(--mono);}
-.pvchg{font-size:11px;color:var(--ac);cursor:pointer;padding:2px 8px;
-  border:1px solid var(--ac);border-radius:4px;}
+.pvchg{font-size:11px;color:var(--ac);cursor:pointer;padding:2px 8px;border:1px solid var(--ac);border-radius:4px;}
 
 .hinp{width:100%;padding:9px 10px;background:var(--bg3);border:1px solid var(--brd2);
   border-radius:6px;color:var(--tx);font-family:var(--kr);font-size:13px;
-  outline:none;resize:none;-webkit-appearance:none;}
+  outline:none;resize:none;margin-bottom:8px;display:block;}
 .hinp:focus{border-color:var(--ac);}
 .hinp::placeholder{color:var(--tx3);}
 
 .rbtn{width:100%;padding:14px;background:var(--ac);color:#fff;border:none;
   border-radius:9px;font-family:var(--kr);font-size:15px;font-weight:700;
-  cursor:pointer;display:block;margin-top:10px;transition:opacity .15s;}
+  cursor:pointer;display:block;transition:opacity .15s;margin-bottom:10px;}
 .rbtn:hover{opacity:.88;}
 .rbtn:disabled{opacity:.3;cursor:not-allowed;}
 
-.steps{display:none;margin-top:12px;}
-.step{display:flex;align-items:center;gap:8px;padding:3px 0;
-  font-size:11px;color:var(--tx3);transition:color .2s;}
+.steps{display:none;margin-bottom:10px;}
+.step{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:11px;color:var(--tx3);transition:color .2s;}
 .step.done{color:var(--gr);}
 .step.active{color:var(--ac);}
 .sdot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
 .step.active .sdot{animation:sd .7s infinite alternate;}
 @keyframes sd{to{opacity:.1}}
 
-.card{background:var(--bg3);border:1px solid var(--brd);border-radius:8px;
-  padding:10px 12px;margin-top:8px;font-size:11px;}
-.ct{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--ac);margin-bottom:6px;}
-.cr{display:flex;justify-content:space-between;padding:2px 0;color:var(--tx2);}
-.cr b{color:var(--tx);font-weight:500;}
-.ctag{padding:1px 6px;border-radius:3px;font-size:10px;font-family:var(--mono);}
-.tg{background:rgba(0,224,148,.1);color:var(--gr);}
-.ta{background:rgba(255,184,0,.1);color:var(--am);}
-.tr{background:rgba(255,68,102,.1);color:var(--rd);}
-
-/* ── 오른쪽: 툴바 + CAD ── */
-#panel-right{min-width:0;}
+/* 오른쪽 CAD 뷰 */
+#right{min-width:0;}
 
 /* 툴바 */
-#toolbar{
+#tbar{
   height:40px;display:flex;align-items:center;gap:5px;flex-shrink:0;
   padding:0 12px;background:var(--bg2);border-bottom:1px solid var(--brd);
 }
-.tbtn{
-  padding:4px 10px;font-size:11px;font-family:var(--kr);
-  background:transparent;color:var(--tx2);border:1px solid var(--brd2);
-  border-radius:5px;cursor:pointer;transition:all .15s;white-space:nowrap;
-}
+.tbtn{padding:4px 10px;font-size:11px;font-family:var(--kr);background:transparent;
+  color:var(--tx2);border:1px solid var(--brd2);border-radius:5px;cursor:pointer;transition:all .15s;}
 .tbtn:hover{border-color:var(--ac);color:var(--ac);}
 .tbtn.on{background:rgba(61,155,255,.12);border-color:var(--ac);color:var(--ac);}
 .tsep{width:1px;height:18px;background:var(--brd);margin:0 2px;flex-shrink:0;}
-.tright{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2);}
+.tright{margin-left:auto;display:flex;align-items:center;gap:8px;}
 
-/* CAD 뷰 영역 - 핵심: 절대 높이 계산 */
-#cad-area{
-  flex:1;
-  position:relative; /* 자식 절대 배치 기준 */
-  overflow:hidden;
-  min-height:0;
+/* CAD 뷰어 */
+#cad-viewer{
+  flex:1;overflow:auto;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  min-height:0;position:relative;cursor:grab;
 }
+#cad-viewer:active{cursor:grabbing;}
+#cad-container{
+  background:white;
+  transform-origin:top left;
+  transition:none;
+  box-shadow:0 4px 30px rgba(0,0,0,.5);
+}
+#cad-container svg{display:block;}
 
-/* 4분할 그리드 */
-#grid-4{
-  position:absolute;inset:0;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  grid-template-rows:1fr 1fr;
-  gap:1px;
-  background:var(--brd);
+/* 빈 상태 */
+#cad-empty{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;
+  color:var(--tx3);pointer-events:none;
 }
-/* 정면 전체 */
-#grid-f{
-  position:absolute;inset:0;
-  display:none;
-}
-/* 3D 전체 */
-#grid-3d{
-  position:absolute;inset:0;
-  display:none;
-}
+.eico{font-size:52px;opacity:.08;}
+.emsg{font-size:12px;line-height:1.9;text-align:center;}
 
-.cv{background:var(--bg);position:relative;overflow:hidden;min-width:0;min-height:0;}
-.cvlbl{position:absolute;top:7px;left:10px;font-size:9px;font-family:var(--mono);
-  color:var(--tx3);letter-spacing:1.5px;z-index:2;pointer-events:none;}
-.cv svg{position:absolute;inset:0;width:100%;height:100%;}
-.cv canvas{position:absolute;inset:0;width:100%!important;height:100%!important;}
-
-.cempty{position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:8px;pointer-events:none;}
-.cempty-ico{font-size:34px;opacity:.08;}
-.cempty-msg{font-size:11px;color:var(--tx3);text-align:center;line-height:1.8;}
+/* 줌 표시 */
+#zoom-info{
+  position:absolute;bottom:10px;right:10px;
+  font-size:10px;font-family:var(--mono);color:var(--tx3);
+  background:rgba(16,18,26,.8);padding:3px 8px;border-radius:4px;
+  pointer-events:none;
+}
 
 /* 저장 바 */
-#save-bar{
+#sbar{
   height:38px;display:flex;align-items:center;gap:5px;flex-shrink:0;
   padding:0 12px;background:var(--bg2);border-top:1px solid var(--brd);
 }
 .sbtn{padding:4px 11px;font-size:11px;font-family:var(--kr);background:transparent;
   color:var(--tx2);border:1px solid var(--brd2);border-radius:5px;cursor:pointer;}
 .sbtn:hover{border-color:var(--ac);color:var(--ac);}
+#dim-note{font-size:10px;color:var(--tx3);margin-left:8px;}
 
-/* ── 모바일 네비 ── */
+/* 모바일 네비 */
 #mob-nav{position:relative;}
-.mnbar{position:absolute;top:0;left:0;height:2px;background:var(--ac);width:25%;transition:left .2s;}
+.mnbar{position:absolute;top:0;left:0;height:2px;background:var(--ac);width:33.3%;transition:left .2s;}
 .ntab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;font-size:10px;color:var(--tx3);cursor:pointer;border:none;background:transparent;
-  padding:6px 0;transition:color .15s;}
+  gap:2px;font-size:10px;color:var(--tx3);cursor:pointer;border:none;background:transparent;padding:6px 0;}
 .ntab.on{color:var(--ac);}
 .ntab-ico{font-size:18px;}
 
-/* 모바일 뷰탭 */
-.mvtabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--brd);
-  position:sticky;top:0;z-index:10;}
-.mvtab{flex:1;padding:10px 4px;font-size:11px;text-align:center;
-  color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;}
-.mvtab.on{color:var(--ac);border-bottom-color:var(--ac);}
-.mcv{display:none;}.mcv.on{display:block;}
-.msvg{width:100%;display:block;}
+/* 모바일 도면 뷰 */
+#mob-cad{overflow:auto;background:var(--bg);}
+#mob-cad-inner{min-width:100%;display:flex;align-items:flex-start;justify-content:flex-start;padding:10px;}
+#mob-cad-inner>div{background:white;box-shadow:0 2px 12px rgba(0,0,0,.4);}
+#mob-cad-inner svg{display:block;}
 
 /* 모바일 저장 */
 .msave{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;}
@@ -213,17 +182,15 @@ input[type=checkbox]{accent-color:var(--ac);}
 .msbtn small{display:block;font-size:10px;color:var(--tx3);margin-top:2px;}
 .msbtn:active{border-color:var(--ac);color:var(--ac);}
 
-/* 빈 상태 */
 .empty{padding:50px 20px;text-align:center;color:var(--tx3);font-size:12px;line-height:1.8;}
-.eico{font-size:40px;opacity:.1;margin-bottom:10px;}
+.eico2{font-size:40px;opacity:.1;margin-bottom:10px;}
 
-::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px;}
 </style>
 </head>
 <body>
 
-<!-- 헤더 -->
 <div id="hdr">
   <div class="logo">승언ENG <b>CAD</b><span class="badge">GEMINI FREE</span></div>
   <div class="hst"><div class="hdot"></div>AI 준비됨</div>
@@ -231,18 +198,17 @@ input[type=checkbox]{accent-color:var(--ac);}
 
 <div id="app">
 
-  <!-- ══ PC 왼쪽 패널 ══ -->
-  <div id="panel-left">
-
+  <!-- PC 왼쪽 -->
+  <div id="left">
     <div class="sec">STEP 1 — GEMINI API 키</div>
     <div class="kbox">
-      <div class="krow"><span class="klbl">🔑 Gemini API 키</span><span class="kbadge">무료</span></div>
+      <div class="krow"><span class="klbl">🔑 Gemini API 키</span><span class="kbdg">무료</span></div>
       <input class="kinp" id="key" type="password" placeholder="AIzaSy..." oninput="onKey()">
       <div class="knote">무료 발급: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></div>
-      <label class="srow"><input type="checkbox" id="save-chk" onchange="onSave()">이 브라우저에 키 저장</label>
+      <label class="srow"><input type="checkbox" id="savechk" onchange="onSave()">이 브라우저에 키 저장</label>
     </div>
 
-    <div class="sec">STEP 2 — 도면 업로드</div>
+    <div class="sec">STEP 2 — 스케치 업로드</div>
     <div class="ubtn" onclick="triggerUpload()">
       <div class="uico">📷</div>
       <div class="utitle" id="utitle">클릭해서 사진 선택</div>
@@ -258,100 +224,68 @@ input[type=checkbox]{accent-color:var(--ac);}
 
     <div class="sec">STEP 3 — 힌트 (선택)</div>
     <textarea class="hinp" id="hint" rows="2"
-      placeholder="예) 연필꽂이 가로 150mm&#10;예) 계단실 평면도, 유리문 있음"></textarea>
+      placeholder="예) 천정 디퓨져 단면도&#10;예) 가로 380mm, 세부치수 있음"></textarea>
 
     <div class="sec">STEP 4 — 변환</div>
     <button class="rbtn" id="rbtn" onclick="run()" disabled>▶ CAD 도면으로 변환</button>
 
     <div class="steps" id="steps">
       <div class="step" id="s1"><div class="sdot"></div>🔍 모델 확인 중...</div>
-      <div class="step" id="s2"><div class="sdot"></div>📐 형상 분석 중...</div>
-      <div class="step" id="s3"><div class="sdot"></div>✏️ 도면 생성 중...</div>
+      <div class="step" id="s2"><div class="sdot"></div>🖼 스케치 분석 중...</div>
+      <div class="step" id="s3"><div class="sdot"></div>✏️ CAD 도면 그리는 중...</div>
       <div class="step" id="s4"><div class="sdot"></div>✅ 완료</div>
     </div>
-
-    <div id="cards"></div>
   </div>
 
-  <!-- ══ PC 오른쪽 패널 ══ -->
-  <div id="panel-right">
-
-    <!-- 툴바 -->
-    <div id="toolbar">
-      <button class="tbtn on" id="tb4" onclick="showGrid('4')">4분할</button>
-      <button class="tbtn"    id="tbf" onclick="showGrid('f')">정면 전체</button>
-      <button class="tbtn"           onclick="refit()">맞춤</button>
+  <!-- PC 오른쪽 -->
+  <div id="right">
+    <div id="tbar">
+      <button class="tbtn" onclick="zoomIn()">🔍+</button>
+      <button class="tbtn" onclick="zoomOut()">🔍-</button>
+      <button class="tbtn" onclick="zoomFit()">맞춤</button>
+      <button class="tbtn" onclick="zoom100()">100%</button>
       <div class="tsep"></div>
-      <button class="tbtn"    id="tbcad" onclick="showGrid('cad')">CAD 2D</button>
-      <button class="tbtn"    id="tb3d"  onclick="showGrid('3d')">3D 입체</button>
+      <button class="tbtn on" id="tb-white" onclick="setBg('white',this)">백지</button>
+      <button class="tbtn" id="tb-dark" onclick="setBg('dark',this)">다크</button>
       <div class="tright">
-        <input type="checkbox" id="dimchk" checked onchange="toggleDim()">
-        <label for="dimchk">치수선</label>
+        <span id="dim-note" style="color:var(--gr);display:none;">✓ 치수 포함</span>
       </div>
     </div>
 
-    <!-- CAD 영역 -->
-    <div id="cad-area">
-
-      <!-- 4분할 -->
-      <div id="grid-4">
-        <div class="cv" id="cv-front"><div class="cvlbl">FRONT — 정면도</div><svg id="svg-front"></svg>
-          <div class="cempty" id="ce-front"><div class="cempty-ico">⬜</div><div class="cempty-msg">① API 키 입력<br>② 사진 업로드<br>③ 변환 버튼 클릭</div></div>
-        </div>
-        <div class="cv" id="cv-side"><div class="cvlbl">SIDE — 측면도</div><svg id="svg-side"></svg><div class="cempty" id="ce-side"></div></div>
-        <div class="cv" id="cv-top"><div class="cvlbl">TOP — 평면도</div><svg id="svg-top"></svg><div class="cempty" id="ce-top"></div></div>
-        <div class="cv" id="cv-3d"><div class="cvlbl">ISO — 등각도</div><canvas id="canvas-pc"></canvas><div class="cempty" id="ce-3d"></div></div>
-      </div>
-
-      <!-- 정면 전체 -->
-      <div id="grid-f" class="cv">
-        <div class="cvlbl">FRONT — 정면도 (전체)</div>
-        <svg id="svg-front-f"></svg>
-        <div class="cempty" id="ce-f"><div class="cempty-ico">⬜</div><div class="cempty-msg">변환 후 표시됩니다</div></div>
-      </div>
-
-      <!-- CAD 전체 (정면+측면 나란히) -->
-      <div id="grid-cad" style="position:absolute;inset:0;display:none;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--brd);">
-        <div class="cv"><div class="cvlbl">FRONT — 정면도</div><svg id="svg-front-c"></svg></div>
-        <div class="cv"><div class="cvlbl">SIDE — 측면도</div><svg id="svg-side-c"></svg></div>
-        <div class="cv"><div class="cvlbl">TOP — 평면도</div><svg id="svg-top-c"></svg></div>
-        <div class="cv" style="background:var(--bg3);display:flex;align-items:center;justify-content:center;">
-          <div style="font-size:11px;color:var(--tx3);text-align:center;line-height:1.8;">CAD 2D 모드<br>정면·측면·평면도 표시</div>
+    <div id="cad-viewer" onwheel="onWheel(event)">
+      <div id="cad-empty">
+        <div class="eico">📐</div>
+        <div class="emsg">
+          스케치 사진을 업로드하고<br>
+          변환 버튼을 누르면<br>
+          여기에 CAD 도면이 표시됩니다
         </div>
       </div>
-
-      <!-- 3D 전체 -->
-      <div id="grid-3d" class="cv">
-        <div class="cvlbl">ISO — 등각도 (전체 3D)</div>
-        <canvas id="canvas-3d-f"></canvas>
-        <div class="cempty" id="ce-3df"><div class="cempty-ico">🧊</div><div class="cempty-msg">변환 후 표시됩니다</div></div>
-      </div>
-
+      <div id="cad-container"></div>
+      <div id="zoom-info">100%</div>
     </div>
 
-    <!-- 저장 바 -->
-    <div id="save-bar">
+    <div id="sbar">
       <button class="sbtn" onclick="saveSVG()">📐 SVG 저장</button>
-      <button class="sbtn" onclick="saveDXF()">📄 DXF 저장</button>
-      <button class="sbtn" onclick="saveOBJ()">📦 OBJ 저장</button>
       <button class="sbtn" onclick="savePNG()">🖼 PNG 저장</button>
+      <button class="sbtn" onclick="saveDXF()">📄 DXF 저장</button>
     </div>
   </div>
 
-  <!-- ══ 모바일 페이지 ══ -->
-  <div id="mob-pages">
+  <!-- 모바일 -->
+  <div id="mob-wrap">
 
     <!-- 입력 -->
     <div class="mob-page on" id="mp0">
       <div style="padding:14px;">
         <div class="sec" style="margin-top:0;">STEP 1 — GEMINI API 키</div>
         <div class="kbox">
-          <div class="krow"><span class="klbl">🔑 Gemini API 키</span><span class="kbadge">무료</span></div>
+          <div class="krow"><span class="klbl">🔑 Gemini API 키</span><span class="kbdg">무료</span></div>
           <input class="kinp" id="mkey" type="password" placeholder="AIzaSy..." oninput="onKey()">
           <div class="knote">무료 발급: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></div>
-          <label class="srow"><input type="checkbox" id="msave-chk" onchange="onSave()">이 브라우저에 키 저장</label>
+          <label class="srow"><input type="checkbox" id="msavechk" onchange="onSave()">이 브라우저에 키 저장</label>
         </div>
-        <div class="sec">STEP 2 — 도면 사진 업로드</div>
+        <div class="sec">STEP 2 — 스케치 업로드</div>
         <div class="ubtn" onclick="triggerUpload()">
           <div class="uico">📷</div>
           <div class="utitle" id="mutitle">여기를 눌러서 사진 선택</div>
@@ -366,13 +300,13 @@ input[type=checkbox]{accent-color:var(--ac);}
         </div>
         <div class="sec">STEP 3 — 힌트 (선택)</div>
         <textarea class="hinp" id="mhint" rows="2"
-          placeholder="예) 연필꽂이 가로 150mm&#10;예) 계단실 평면도, 유리문"></textarea>
+          placeholder="예) 천정 디퓨져 단면도&#10;예) 가로 380mm, 세부치수 있음"></textarea>
         <div class="sec">STEP 4 — 변환</div>
         <button class="rbtn" id="mrbtn" onclick="run()" disabled>▶ CAD 도면으로 변환</button>
         <div class="steps" id="msteps">
           <div class="step" id="ms1"><div class="sdot"></div>🔍 모델 확인 중...</div>
-          <div class="step" id="ms2"><div class="sdot"></div>📐 형상 분석 중...</div>
-          <div class="step" id="ms3"><div class="sdot"></div>✏️ 도면 생성 중...</div>
+          <div class="step" id="ms2"><div class="sdot"></div>🖼 스케치 분석 중...</div>
+          <div class="step" id="ms3"><div class="sdot"></div>✏️ CAD 도면 그리는 중...</div>
           <div class="step" id="ms4"><div class="sdot"></div>✅ 완료</div>
         </div>
       </div>
@@ -380,38 +314,22 @@ input[type=checkbox]{accent-color:var(--ac);}
 
     <!-- 도면 -->
     <div class="mob-page" id="mp1">
-      <div class="mvtabs">
-        <div class="mvtab on" onclick="mobView('front',this)">정면도</div>
-        <div class="mvtab" onclick="mobView('side',this)">측면도</div>
-        <div class="mvtab" onclick="mobView('top',this)">평면도</div>
-        <div class="mvtab" onclick="mobView('3d',this)">3D</div>
-      </div>
-      <div class="mcv on" id="mcv-front"><svg class="msvg" id="msvg-front"></svg>
-        <div class="empty" id="mce-front"><div class="eico">📐</div>변환 후 도면이 표시됩니다</div></div>
-      <div class="mcv" id="mcv-side"><svg class="msvg" id="msvg-side"></svg></div>
-      <div class="mcv" id="mcv-top"><svg class="msvg" id="msvg-top"></svg></div>
-      <div class="mcv" id="mcv-3d">
-        <div style="width:100%;aspect-ratio:4/3;position:relative;background:var(--bg);">
-          <canvas id="mcanvas-3d" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+      <div id="mob-cad">
+        <div id="mob-cad-inner">
+          <div id="mob-cad-container">
+            <div class="empty"><div class="eico2">📐</div>변환 후 도면이 표시됩니다</div>
+          </div>
         </div>
-        <div class="empty" id="mce-3d"><div class="eico">🧊</div>변환 후 3D가 표시됩니다</div>
-      </div>
-    </div>
-
-    <!-- 결과 -->
-    <div class="mob-page" id="mp2">
-      <div style="padding:14px;" id="mcards">
-        <div class="empty"><div class="eico">📋</div>변환 후 분석 결과가<br>여기에 표시됩니다</div>
       </div>
     </div>
 
     <!-- 저장 -->
-    <div class="mob-page" id="mp3">
+    <div class="mob-page" id="mp2">
       <div class="msave">
         <button class="msbtn" onclick="saveSVG()">📐 SVG<small>CAD 호환</small></button>
-        <button class="msbtn" onclick="saveDXF()">📄 DXF<small>AutoCAD</small></button>
-        <button class="msbtn" onclick="saveOBJ()">📦 OBJ<small>3D/프린터</small></button>
         <button class="msbtn" onclick="savePNG()">🖼 PNG<small>이미지</small></button>
+        <button class="msbtn" onclick="saveDXF()">📄 DXF<small>AutoCAD</small></button>
+        <button class="msbtn" onclick="copyRaw()">📋 복사<small>SVG 코드</small></button>
       </div>
     </div>
 
@@ -422,8 +340,7 @@ input[type=checkbox]{accent-color:var(--ac);}
     <div class="mnbar" id="mnbar"></div>
     <button class="ntab on" id="nt0" onclick="goTab(0)"><div class="ntab-ico">✏️</div>입력</button>
     <button class="ntab"    id="nt1" onclick="goTab(1)"><div class="ntab-ico">📐</div>도면</button>
-    <button class="ntab"    id="nt2" onclick="goTab(2)"><div class="ntab-ico">📋</div>결과</button>
-    <button class="ntab"    id="nt3" onclick="goTab(3)"><div class="ntab-ico">💾</div>저장</button>
+    <button class="ntab"    id="nt2" onclick="goTab(2)"><div class="ntab-ico">💾</div>저장</button>
   </div>
 
 </div>
@@ -436,82 +353,47 @@ input[type=checkbox]{accent-color:var(--ac);}
 <script>
 'use strict';
 
-/* ── 상태 ── */
-let B64=null, MIME='image/jpeg', CAD=null, DIM=true;
-let GRID='4'; // 현재 PC 뷰 모드
+let B64=null, MIME='image/jpeg', SVG_CODE=null;
+let zoom=1, panX=0, panY=0;
+let isPanning=false, lastPan={x:0,y:0};
+let cadBg='white';
 
-const PC = ()=>window.innerWidth>=769;
+const PC=()=>window.innerWidth>=769;
 
-/* ── 초기화 ── */
+/* 초기화 */
 window.addEventListener('DOMContentLoaded',()=>{
   const k=localStorage.getItem('gk');
   if(k){
     ['key','mkey'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=k;});
-    ['save-chk','msave-chk'].forEach(id=>{const e=document.getElementById(id);if(e)e.checked=true;});
+    ['savechk','msavechk'].forEach(id=>{const e=document.getElementById(id);if(e)e.checked=true;});
   }
   checkReady();
+  initPan();
 });
 
-/* ── 모바일 탭 ── */
+/* 모바일 탭 */
 function goTab(i){
-  for(let n=0;n<4;n++){
+  for(let n=0;n<3;n++){
     document.getElementById('mp'+n).classList.toggle('on',n===i);
     document.getElementById('nt'+n).classList.toggle('on',n===i);
   }
-  document.getElementById('mnbar').style.left=(i*25)+'%';
-}
-function mobView(v,el){
-  document.querySelectorAll('.mvtab').forEach(t=>t.classList.remove('on'));
-  el.classList.add('on');
-  document.querySelectorAll('.mcv').forEach(c=>c.classList.remove('on'));
-  document.getElementById('mcv-'+v).classList.add('on');
+  document.getElementById('mnbar').style.left=(i*33.33)+'%';
 }
 
-/* ── PC 그리드 전환 ── */
-const GRIDS=['grid-4','grid-f','grid-cad','grid-3d'];
-function showGrid(mode){
-  GRID=mode;
-  // 툴바 버튼 상태
-  ['4','f','cad','3d'].forEach(m=>{
-    const b=document.getElementById('tb'+m); if(b) b.classList.toggle('on',m===mode);
-  });
-  // 모든 그리드 숨기기
-  GRIDS.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){ el.style.display='none'; el.style.position='absolute'; }
-  });
-  // 선택된 그리드 표시
-  const target={
-    '4':'grid-4','f':'grid-f','cad':'grid-cad','3d':'grid-3d'
-  }[mode];
-  const el=document.getElementById(target);
-  if(el){
-    el.style.display=(mode==='4'||mode==='cad')?'grid':'block';
-    el.style.position='absolute';
-    el.style.inset='0';
-  }
-  // 데이터 있으면 다시 그리기
-  if(CAD) setTimeout(()=>renderPC(CAD),50);
-}
-
-function refit(){ if(CAD) renderPC(CAD); }
-function toggleDim(){ DIM=document.getElementById('dimchk').checked; if(CAD) renderPC(CAD); }
-
-/* ── 키/파일 ── */
-function getKey(){ return (document.getElementById(PC()?'key':'mkey')||{}).value?.trim()||''; }
-function getHint(){ return (document.getElementById(PC()?'hint':'mhint')||{}).value?.trim()||''; }
-
+/* 키 */
+function getKey(){return (document.getElementById(PC()?'key':'mkey')||{}).value?.trim()||'';}
+function getHint(){return (document.getElementById(PC()?'hint':'mhint')||{}).value?.trim()||'';}
 function onKey(){
   const v=getKey();
   ['key','mkey'].forEach(id=>{const e=document.getElementById(id);if(e&&e.value!==v)e.value=v;});
-  if(document.getElementById('save-chk')?.checked||document.getElementById('msave-chk')?.checked)
-    localStorage.setItem('gk',v);
+  if(document.getElementById('savechk')?.checked||document.getElementById('msavechk')?.checked)
+    localStorage.setItem('gk',v.trim());
   checkReady();
 }
 function onSave(){
   const k=getKey();
-  const c=(document.getElementById('save-chk')?.checked)||(document.getElementById('msave-chk')?.checked);
-  ['save-chk','msave-chk'].forEach(id=>{const e=document.getElementById(id);if(e)e.checked=!!c;});
+  const c=document.getElementById('savechk')?.checked||document.getElementById('msavechk')?.checked;
+  ['savechk','msavechk'].forEach(id=>{const e=document.getElementById(id);if(e)e.checked=!!c;});
   if(c&&k) localStorage.setItem('gk',k); else localStorage.removeItem('gk');
 }
 function checkReady(){
@@ -519,17 +401,16 @@ function checkReady(){
   ['rbtn','mrbtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=!ok;});
 }
 
-function triggerUpload(){const inp=document.getElementById('finp');inp.value='';inp.click();}
-
+/* 업로드 */
+function triggerUpload(){const i=document.getElementById('finp');i.value='';i.click();}
 function onFile(inp){
-  const file=inp.files[0]; if(!file) return;
+  const file=inp.files[0];if(!file)return;
   MIME=file.type||'image/jpeg';
   const r=new FileReader();
   r.onload=ev=>{
+    B64=ev.target.result.split(',')[1];
     const src=ev.target.result;
-    B64=src.split(',')[1];
     const info='✓ '+file.name+' ('+Math.round(file.size/1024)+'KB)';
-    // PC 미리보기
     ['pvbox','mpvbox'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='block';});
     ['pvimg','mpvimg'].forEach(id=>{const e=document.getElementById(id);if(e)e.src=src;});
     ['pvname','mpvname'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=info;});
@@ -540,59 +421,56 @@ function onFile(inp){
   r.readAsDataURL(file);
 }
 
-/* ── 진행 단계 ── */
-const SPC=['s1','s2','s3','s4'], SMB=['ms1','ms2','ms3','ms4'];
-function rst(){ [...SPC,...SMB].forEach(id=>{const e=document.getElementById(id);if(e)e.className='step';}); }
-function showSt(){ ['steps','msteps'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='block';}); }
+/* 진행 단계 */
+const SPC=['s1','s2','s3','s4'],SMB=['ms1','ms2','ms3','ms4'];
+function rst(){[...SPC,...SMB].forEach(id=>{const e=document.getElementById(id);if(e)e.className='step';});}
+function showSt(){['steps','msteps'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='block';});}
 function stDone(i){
-  if(i>0){ SPC[i-1]&&(document.getElementById(SPC[i-1]).className='step done'); SMB[i-1]&&(document.getElementById(SMB[i-1]).className='step done'); }
-  if(i<4){ SPC[i]&&(document.getElementById(SPC[i]).className='step active'); SMB[i]&&(document.getElementById(SMB[i]).className='step active'); }
+  if(i>0){SPC[i-1]&&(document.getElementById(SPC[i-1]).className='step done');SMB[i-1]&&(document.getElementById(SMB[i-1]).className='step done');}
+  if(i<4){SPC[i]&&(document.getElementById(SPC[i]).className='step active');SMB[i]&&(document.getElementById(SMB[i]).className='step active');}
 }
-function setBtns(t,d){ ['rbtn','mrbtn'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent=t;e.disabled=d;}}); }
+function setBtns(t,d){['rbtn','mrbtn'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent=t;e.disabled=d;}});}
 
-/* ── Gemini API ── */
-const PROMPT=`[절대 규칙] 순수 JSON만 출력. 첫 글자 { 마지막 글자 }. 마크다운 절대 금지.
+/* ══════════════════════════════════════
+   핵심: Gemini에게 SVG를 직접 그리게 함
+══════════════════════════════════════ */
+const PROMPT=`당신은 CAD 도면 전문가다. 스케치 이미지를 분석해서 정확한 SVG CAD 도면을 그려라.
 
-당신은 20년 경력 기계/건축 CAD 도면 판독 전문가다.
+[규칙]
+1. 스케치의 모든 선을 SVG 요소로 표현하라 (line, polyline, path, rect, circle)
+2. 스케치에 적힌 숫자(치수)를 정확히 읽어서 치수선과 텍스트로 표시하라
+3. ㄷ자, ㄱ자, 계단형 등 복잡한 형상도 polyline/path로 정확히 그려라
+4. 치수선은 화살표와 숫자로 표시하라
+5. 선 굵기: 외곽선 1.5px, 내부선 1px, 치수선 0.7px, 중심선 점선 0.5px
 
-[1단계] 스케치의 모든 숫자(치수)를 정확히 읽어라:
-- 치수선 옆 숫자를 하나도 빠짐없이 읽어라
-- 손글씨 숫자 주의: 3과8, 1과7, 5와6 혼동 주의
-- 제목/부품명 텍스트도 읽어라
-- 읽은 모든 치수를 overall과 shapes에 반영
+[SVG 출력 형식]
+- viewBox는 실제 치수 비율에 맞게 설정 (예: "0 0 600 400")
+- 모든 요소에 적절한 색상 사용:
+  외곽선: stroke="#1a1a2e" 
+  내부선: stroke="#2d3561"
+  치수선: stroke="#e67e22"
+  중심선: stroke="#95a5a6" stroke-dasharray="5,3"
+  치수숫자: fill="#e67e22" font-family="monospace"
+  형상라벨: fill="#2d3561" font-family="sans-serif"
+- fill은 기본적으로 none (단면 해칭이 필요하면 패턴 사용)
+- 마커(화살표) 정의 포함
 
-[2단계] 형상 타입 선택:
-- 단순 사각형 → type:"rect" (w,h 사용)
-- 원/구멍 → type:"circle" (r 사용, hole:true면 구멍)
-- ㄷ자/ㄱ자/복잡한 단면 → type:"polygon" (points 배열 사용)
-  points 형식: [[x1,y1],[x2,y2],...] (mm 단위, 좌하단 기준)
-
-[3단계] shapes 작성 (최대 5개):
-- 외곽 형상부터 내부 순서로
-- 스케치 치수 명시 → estimated:false
-- 치수 없음 → estimated:true
-
-출력 형식:
-{"title":"한국어명칭","unit":"mm","scale_basis":"스케치 치수 직접 사용","overall":{"w":0.00,"h":0.00,"d":0.00},"shapes":[{"id":"S1","name":"한국어이름","type":"rect","layer":"OUTLINE","hole":false,"x":0.00,"y":0.00,"w":0.00,"h":0.00,"r":null,"points":null,"depth":0.00,"estimated":false,"confidence":"high","note":"판독 근거 기술"}],"conversion_notes":[]}
-
-polygon 예시 (ㄷ자 단면, 폭50 높이65):
-{"type":"polygon","points":[[0,0],[50,0],[50,10],[40,10],[40,55],[10,55],[10,10],[0,10]],"w":50,"h":65}
-
-핵심:
-- 스케치 숫자 그대로 사용, 임의 변경 금지
-- 단면도가 여러개면 첫번째 단면만 분석
-- mm단위, 소수점2자리, 이름 한국어`;
+[출력]
+SVG 코드만 출력. 다른 텍스트 없음. <svg 로 시작해서 </svg> 로 끝남.
+마크다운 코드블록 사용 금지.`;
 
 async function run(){
-  const key=getKey(); if(!key||!B64) return;
-  setBtns('변환 중...',true); showSt(); rst(); stDone(0);
+  const key=getKey();if(!key||!B64)return;
+  setBtns('변환 중...',true);showSt();rst();stDone(0);
   const hint=getHint();
-  const userText=hint?`이 스케치 변환. 힌트: ${hint}`:`이 스케치를 CAD 데이터로 변환. 폭 100mm 기준.`;
+  const userMsg=`이 스케치를 CAD 도면 SVG로 변환해줘.${hint?` 참고: ${hint}`:''}
+스케치에 있는 모든 선과 치수를 정확히 반영해줘.
+SVG 코드만 출력해줘.`;
 
   const getModels=async()=>{
     try{
       const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-      if(!r.ok) return null;
+      if(!r.ok)return null;
       const d=await r.json();
       return (d.models||[])
         .filter(m=>m.supportedGenerationMethods?.includes('generateContent'))
@@ -605,16 +483,20 @@ async function run(){
   const callAPI=async(model)=>fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
     {method:'POST',headers:{'Content-Type':'application/json'},
-     body:JSON.stringify({contents:[{parts:[
-       {inline_data:{mime_type:MIME,data:B64}},
-       {text:PROMPT+'\n\n'+userText}
-     ]}],generationConfig:{temperature:0.1,maxOutputTokens:1500}})}
+     body:JSON.stringify({
+       contents:[{parts:[
+         {inline_data:{mime_type:MIME,data:B64}},
+         {text:PROMPT+'\n\n'+userMsg}
+       ]}],
+       generationConfig:{temperature:0.1,maxOutputTokens:4000}
+     })}
   );
 
   try{
     setBtns('모델 확인 중...',true);
     let models=await getModels()||['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash'];
     stDone(1);
+
     let res=null,ok=false;
     for(const m of models){
       setBtns(m+'...',true);
@@ -622,441 +504,211 @@ async function run(){
       if(res.status===429||res.status===404){await new Promise(r=>setTimeout(r,800));continue;}
       if(res.status===400){
         const e=await res.json();
-        if((e.error?.message||'').includes('API key')) throw new Error('API 키가 올바르지 않습니다.');
+        if((e.error?.message||'').includes('API key'))throw new Error('API 키가 올바르지 않습니다.');
         continue;
       }
       if(res.ok){ok=true;break;}
     }
-    if(!ok) throw new Error('잠시 후 다시 시도해주세요.');
+    if(!ok)throw new Error('잠시 후 다시 시도해주세요.');
     stDone(2);
 
     const data=await res.json();
-    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
-    if(!text) throw new Error('응답이 비어있습니다.');
+    let text=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    if(!text)throw new Error('응답이 비어있습니다.');
 
-    let json;
-    try{
-      let s=text.replace(/```json|```/gi,'').trim();
-      const a=s.indexOf('{'),b=s.lastIndexOf('}');
-      if(a!==-1&&b!==-1) s=s.slice(a,b+1);
-      json=JSON.parse(s);
-    }catch{
-      json={title:'분석 형상',unit:'mm',scale_basis:'100mm 기준',overall:{w:100,h:60,d:20},
-        shapes:[{id:'S1',name:'외곽형상',type:'rect',layer:'OUTLINE',hole:false,
-          x:0,y:0,w:100,h:60,r:null,depth:20,estimated:true,confidence:'low',note:'파싱 오류'}],
-        conversion_notes:['응답 파싱 실패 — 힌트 추가 후 재시도']};
-    }
+    // SVG 추출
+    text=text.replace(/```svg|```xml|```/gi,'').trim();
+    const svgStart=text.indexOf('<svg');
+    const svgEnd=text.lastIndexOf('</svg>')+6;
+    if(svgStart===-1||svgEnd<=6)throw new Error('SVG를 찾을 수 없습니다. 다시 시도해주세요.');
+    const svgCode=text.slice(svgStart,svgEnd);
 
-    stDone(3); CAD=json;
+    stDone(3); SVG_CODE=svgCode;
     setTimeout(()=>{
-      stDone(4); renderAll(json); renderCards(json);
+      stDone(4);
+      renderSVG(svgCode);
       setBtns('▶ 다시 변환',false);
       if(!PC()) goTab(1);
     },300);
 
   }catch(err){
     alert('오류: '+err.message);
-    setBtns('▶ CAD 도면으로 변환',false); rst();
+    setBtns('▶ CAD 도면으로 변환',false);rst();
   }
 }
 
-/* ── SVG 렌더링 ── */
-const NS='http://www.w3.org/2000/svg';
-function E(t,a){const e=document.createElementNS(NS,t);if(a)Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e;}
+/* SVG 렌더링 */
+function renderSVG(svgCode){
+  // 배경색 적용
+  const colored=applyBg(svgCode);
 
-const COLORS=['#3d9bff','#00e094','#ffb800','#a78bfa','#ff6b9d','#00d4ff'];
+  // PC
+  const container=document.getElementById('cad-container');
+  const empty=document.getElementById('cad-empty');
+  if(container){
+    container.innerHTML=colored;
+    if(empty) empty.style.display='none';
+    zoomFit();
+  }
 
-function drawSVG(vid,j,svg,W,H){
-  svg.innerHTML='';
-  const PAD=55, ov=j.overall||{w:100,h:60,d:20};
-  let VW,VH,lW,lH;
-  if(vid==='front'){VW=ov.w;VH=ov.h;lW=ov.w;lH=ov.h;}
-  else if(vid==='side'){VW=Math.max(ov.d,1);VH=ov.h;lW=ov.d;lH=ov.h;}
-  else{VW=ov.w;VH=Math.max(ov.d,1);lW=ov.w;lH=ov.d;}
+  // 모바일
+  const mContainer=document.getElementById('mob-cad-container');
+  if(mContainer){
+    mContainer.innerHTML=colored;
+    // 모바일은 폭에 맞게
+    const svg=mContainer.querySelector('svg');
+    if(svg){
+      svg.style.maxWidth='100%';
+      svg.style.height='auto';
+    }
+  }
 
-  const sc=Math.min((W-PAD*2)/Math.max(VW,1),(H-PAD*2)/Math.max(VH,1),8);
-  const ox=(W-VW*sc)/2, oy=(H-VH*sc)/2;
+  // 치수 포함 표시
+  const dn=document.getElementById('dim-note');
+  if(dn) dn.style.display='inline';
+}
 
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
-  svg.setAttribute('width',W); svg.setAttribute('height',H);
+function applyBg(svgCode){
+  if(cadBg==='white') return svgCode;
+  // 다크 모드: 배경 추가
+  return svgCode.replace('<svg','<svg style="background:#09090f;"').replace(/stroke="#1a1a2e"/g,'stroke="#dde8ff"').replace(/stroke="#2d3561"/g,'stroke="#8899cc"').replace(/fill="#1a1a2e"/g,'fill="#dde8ff"').replace(/fill="#2d3561"/g,'fill="#8899cc"');
+}
 
-  // 배경 격자
-  const gg=E('g');
-  for(let x=0;x<W;x+=20) gg.appendChild(E('line',{x1:x,y1:0,x2:x,y2:H,stroke:'#141d2a','stroke-width':'.5'}));
-  for(let y=0;y<H;y+=20) gg.appendChild(E('line',{x1:0,y1:y,x2:W,y2:y,stroke:'#141d2a','stroke-width':'.5'}));
-  svg.appendChild(gg);
+/* 줌/팬 */
+function updateTransform(){
+  const c=document.getElementById('cad-container');
+  if(c) c.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;
+  document.getElementById('zoom-info').textContent=Math.round(zoom*100)+'%';
+}
+function zoomIn(){zoom=Math.min(zoom*1.25,8);updateTransform();}
+function zoomOut(){zoom=Math.max(zoom/1.25,0.1);updateTransform();}
+function zoom100(){zoom=1;panX=0;panY=0;updateTransform();}
+function zoomFit(){
+  const viewer=document.getElementById('cad-viewer');
+  const c=document.getElementById('cad-container');
+  const svg=c?.querySelector('svg');
+  if(!viewer||!c||!svg)return;
+  const vw=viewer.clientWidth-40, vh=viewer.clientHeight-40;
+  const sw=svg.clientWidth||600, sh=svg.clientHeight||400;
+  zoom=Math.min(vw/sw, vh/sh, 2);
+  panX=(vw-sw*zoom)/2+20; panY=(vh-sh*zoom)/2+20;
+  updateTransform();
+}
+function onWheel(e){
+  e.preventDefault();
+  const rect=document.getElementById('cad-viewer').getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const oldZoom=zoom;
+  if(e.deltaY<0) zoom=Math.min(zoom*1.1,8);
+  else zoom=Math.max(zoom/1.1,0.1);
+  panX=mx-(mx-panX)*(zoom/oldZoom);
+  panY=my-(my-panY)*(zoom/oldZoom);
+  updateTransform();
+}
 
-  // 중심선
-  svg.appendChild(E('line',{x1:0,y1:H/2,x2:W,y2:H/2,stroke:'#192840','stroke-width':'.7','stroke-dasharray':'8,4'}));
-  svg.appendChild(E('line',{x1:W/2,y1:0,x2:W/2,y2:H,stroke:'#192840','stroke-width':'.7','stroke-dasharray':'8,4'}));
-
-  // 외곽 바운딩 박스
-  svg.appendChild(E('rect',{x:ox,y:oy,width:VW*sc,height:VH*sc,
-    fill:'rgba(61,155,255,.04)',stroke:'#3d9bff','stroke-width':'1.2','stroke-dasharray':'6,3'}));
-
-  // 형상들
-  (j.shapes||[]).forEach((s,si)=>{
-    const col=s.hole?'#ff4466':COLORS[si%COLORS.length];
-    const fil=s.hole?'rgba(255,68,102,.06)':'rgba(0,0,0,0)';
-    const dsh=s.hole?'4,3':'none';
-
-    if(s.type==='polygon'&&s.points&&s.points.length>2){
-      // polygon 형상 (ㄷ자, ㄱ자 등 복잡 단면)
-      let pts;
-      if(vid==='front'){
-        pts=s.points.map(p=>[ox+p[0]*sc, oy+VH*sc-p[1]*sc]);
-      } else if(vid==='side'){
-        const scD=(s.depth||ov.d||20);
-        pts=s.points.map(p=>[ox+p[0]*(sc*scD/Math.max(s.w||50,1)), oy+VH*sc-p[1]*sc]);
-      } else {
-        pts=s.points.map(p=>[ox+p[0]*sc, oy+(s.depth||ov.d||20)*sc-p[1]*(sc*(s.depth||ov.d||20)/Math.max(s.h||60,1))]);
-      }
-      const pstr=pts.map(p=>p[0]+','+p[1]).join(' ');
-      svg.appendChild(E('polygon',{points:pstr,fill:fil,stroke:col,'stroke-width':'1.8','stroke-dasharray':dsh}));
-      // 해칭
-      const bb={minX:Math.min(...pts.map(p=>p[0])),maxX:Math.max(...pts.map(p=>p[0])),
-                minY:Math.min(...pts.map(p=>p[1])),maxY:Math.max(...pts.map(p=>p[1]))};
-      const cid2='cpol'+si+vid;
-      const defs2=E('defs'),cp2=E('clipPath',{id:cid2});
-      const pg=E('polygon',{points:pstr}); cp2.appendChild(pg); defs2.appendChild(cp2); svg.appendChild(defs2);
-      const hg2=E('g',{'clip-path':'url(#'+cid2+')'});
-      for(let hi=0;hi<(bb.maxX-bb.minX)+(bb.maxY-bb.minY);hi+=12)
-        hg2.appendChild(E('line',{x1:bb.minX+hi,y1:bb.minY,x2:bb.minX,y2:bb.minY+hi,
-          stroke:col,'stroke-width':'0.8','opacity':'0.15'}));
-      svg.appendChild(hg2);
-      if(s.name){
-        const cx2=(bb.minX+bb.maxX)/2, cy2=(bb.minY+bb.maxY)/2;
-        const lt2=E('text',{x:cx2,y:cy2+3,'text-anchor':'middle',fill:col,'font-size':'9','font-family':'Noto Sans KR,sans-serif'});
-        lt2.textContent=s.name; svg.appendChild(lt2);
-      }
-    } else if(s.type==='circle'){
-      const br=s.r||(s.w||50)/2;
-      const cx=ox+((s.x||0)+br)*sc;
-      const cy=oy+((s.y||0)+br)*sc;
-      const cr=Math.max(br*sc,1);
-      svg.appendChild(E('circle',{cx,cy,r:cr,fill:fil,stroke:col,'stroke-width':'1.5','stroke-dasharray':dsh}));
-      svg.appendChild(E('line',{x1:cx-cr-8,y1:cy,x2:cx+cr+8,y2:cy,stroke:col,'stroke-width':'.6','stroke-dasharray':'5,3','opacity':'.5'}));
-      svg.appendChild(E('line',{x1:cx,y1:cy-cr-8,x2:cx,y2:cy+cr+8,stroke:col,'stroke-width':'.6','stroke-dasharray':'5,3','opacity':'.5'}));
-      if(s.name&&cr>15){
-        const lt=E('text',{x:cx,y:cy+3,'text-anchor':'middle',fill:col,'font-size':'9','font-family':'Noto Sans KR,sans-serif'});
-        lt.textContent=s.name; svg.appendChild(lt);
-      }
-    } else {
-      let rx=ox+(s.x||0)*sc, ry=oy+(s.y||0)*sc, rw, rh;
-      if(vid==='front'){rw=(s.w||100)*sc;rh=(s.h||60)*sc;}
-      else if(vid==='side'){rw=(s.depth||ov.d||20)*sc;rh=(s.h||60)*sc;}
-      else{rw=(s.w||100)*sc;rh=(s.depth||ov.d||20)*sc;}
-      if(Math.abs(rw)<1||Math.abs(rh)<1) return;
-
-      // 해칭 (정면도, 구멍 아님)
-      if(vid==='front'&&!s.hole){
-        const cid='cp'+si;
-        const defs=E('defs'), cp=E('clipPath',{id:cid});
-        cp.appendChild(E('rect',{x:rx,y:ry,width:Math.abs(rw),height:Math.abs(rh)}));
-        defs.appendChild(cp); svg.appendChild(defs);
-        const hg=E('g',{'clip-path':`url(#${cid})`});
-        for(let hi=0;hi<Math.abs(rw)+Math.abs(rh);hi+=12)
-          hg.appendChild(E('line',{x1:rx+hi,y1:ry,x2:rx,y2:ry+hi,
-            stroke:col,'stroke-width':'.8','opacity':'.12'}));
-        svg.appendChild(hg);
-      }
-
-      svg.appendChild(E('rect',{x:rx,y:ry,width:Math.abs(rw),height:Math.abs(rh),
-        fill:fil,stroke:col,'stroke-width':'1.6','stroke-dasharray':dsh}));
-
-      // 이름 라벨
-      if(s.name&&!s.hole&&Math.abs(rw)>25&&Math.abs(rh)>12){
-        const lx=rx+Math.abs(rw)/2, ly=ry+Math.abs(rh)/2+4;
-        const lt=E('text',{x:lx,y:ly,'text-anchor':'middle',fill:col,
-          'font-size':'9','font-family':'Noto Sans KR,sans-serif'});
-        lt.textContent=s.name; svg.appendChild(lt);
-      }
+function initPan(){
+  const viewer=document.getElementById('cad-viewer');
+  if(!viewer)return;
+  viewer.addEventListener('mousedown',e=>{
+    if(e.target===viewer||e.target.id==='cad-container'||e.target.tagName==='svg'||e.target.closest('#cad-container')){
+      isPanning=true;lastPan={x:e.clientX,y:e.clientY};
     }
   });
-
-  // 치수선
-  if(!DIM) return;
-  const ac='#ffb800', OF=30;
-  const right=ox+VW*sc, bot=oy+VH*sc;
-  const uid='ar'+(vid+W+H);
-  if(!svg.querySelector('#'+uid)){
-    const d=E('defs'), mk=E('marker',{id:uid,markerWidth:'5',markerHeight:'5',refX:'2.5',refY:'2.5',orient:'auto'});
-    mk.appendChild(E('path',{d:'M0,0 L0,5 L5,2.5 z',fill:ac}));
-    d.appendChild(mk); svg.appendChild(d);
-  }
-  // 가로
-  const yy=bot+OF;
-  svg.appendChild(E('line',{x1:ox,y1:yy-6,x2:ox,y2:yy+6,stroke:ac,'stroke-width':'.8'}));
-  svg.appendChild(E('line',{x1:right,y1:yy-6,x2:right,y2:yy+6,stroke:ac,'stroke-width':'.8'}));
-  svg.appendChild(E('line',{x1:ox,y1:yy,x2:right,y2:yy,stroke:ac,'stroke-width':'1',
-    'marker-start':'url(#'+uid+')','marker-end':'url(#'+uid+')'}));
-  const tw=E('text',{x:(ox+right)/2,y:yy+14,'text-anchor':'middle',fill:ac,
-    'font-size':'11','font-family':'JetBrains Mono,monospace'});
-  tw.textContent=lW+'mm'; svg.appendChild(tw);
-  // 세로
-  const xx=right+OF;
-  svg.appendChild(E('line',{x1:xx-6,y1:oy,x2:xx+6,y2:oy,stroke:ac,'stroke-width':'.8'}));
-  svg.appendChild(E('line',{x1:xx-6,y1:bot,x2:xx+6,y2:bot,stroke:ac,'stroke-width':'.8'}));
-  svg.appendChild(E('line',{x1:xx,y1:oy,x2:xx,y2:bot,stroke:ac,'stroke-width':'1',
-    'marker-start':'url(#'+uid+')','marker-end':'url(#'+uid+')'}));
-  const th=E('text',{x:xx+13,y:(oy+bot)/2+4,'text-anchor':'start',fill:ac,
-    'font-size':'11','font-family':'JetBrains Mono,monospace'});
-  th.textContent=lH+'mm'; svg.appendChild(th);
-}
-
-/* ── 전체 렌더 ── */
-function renderAll(j){
-  renderPC(j);
-  renderMob(j);
-  buildAllThree(j);
-  // empty 숨기기
-  ['front','side','top','3d','f','3df'].forEach(v=>{
-    const e=document.getElementById('ce-'+v); if(e) e.style.display='none';
-    const me=document.getElementById('mce-'+v); if(me) me.style.display='none';
+  viewer.addEventListener('mousemove',e=>{
+    if(!isPanning)return;
+    panX+=e.clientX-lastPan.x; panY+=e.clientY-lastPan.y;
+    lastPan={x:e.clientX,y:e.clientY};
+    updateTransform();
   });
+  viewer.addEventListener('mouseup',()=>isPanning=false);
+  viewer.addEventListener('mouseleave',()=>isPanning=false);
+  // 터치 패닝
+  let t0=null;
+  viewer.addEventListener('touchstart',e=>{if(e.touches.length===1)t0={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
+  viewer.addEventListener('touchmove',e=>{
+    if(!t0||e.touches.length!==1)return;
+    panX+=e.touches[0].clientX-t0.x; panY+=e.touches[0].clientY-t0.y;
+    t0={x:e.touches[0].clientX,y:e.touches[0].clientY};
+    updateTransform();
+  },{passive:true});
 }
 
-function renderPC(j){
-  // 4분할 그리드
-  const views=['front','side','top'];
-  views.forEach(v=>{
-    const svg=document.getElementById('svg-'+v);
-    const cell=document.getElementById('cv-'+v);
-    if(!svg||!cell) return;
-    const W=cell.clientWidth||400, H=cell.clientHeight||300;
-    if(W<10||H<10) return;
-    drawSVG(v,j,svg,W,H);
+/* 배경 전환 */
+function setBg(bg,el){
+  cadBg=bg;
+  document.querySelectorAll('#tbar .tbtn').forEach(b=>{
+    if(b.id==='tb-white'||b.id==='tb-dark') b.classList.remove('on');
   });
-  // 정면 전체
-  const svgF=document.getElementById('svg-front-f');
-  const cellF=document.getElementById('grid-f');
-  if(svgF&&cellF&&cellF.clientWidth>10)
-    drawSVG('front',j,svgF,cellF.clientWidth,cellF.clientHeight);
-  // CAD 2D 그리드
-  views.forEach(v=>{
-    const svg=document.getElementById('svg-'+v+'-c');
-    const cell=document.getElementById('grid-cad');
-    if(!svg||!cell) return;
-    const W=cell.clientWidth/2||300, H=cell.clientHeight/2||200;
-    drawSVG(v,j,svg,W,H);
-  });
+  el.classList.add('on');
+  const viewer=document.getElementById('cad-viewer');
+  if(viewer) viewer.style.background=bg==='white'?'#1a1a2e':'var(--bg)';
+  if(SVG_CODE) renderSVG(SVG_CODE);
 }
 
-function renderMob(j){
-  ['front','side','top'].forEach(v=>{
-    const svg=document.getElementById('msvg-'+v); if(!svg) return;
-    const W=window.innerWidth||375, H=Math.round(W*0.75);
-    svg.style.height=H+'px';
-    drawSVG(v,j,svg,W,H);
-  });
+/* 저장 */
+function getSVG(){
+  return document.getElementById('cad-container')?.querySelector('svg')
+      || document.getElementById('mob-cad-container')?.querySelector('svg');
 }
-
-/* ── Three.js ── */
-const T3={};
-let iDrag=false, lastM={x:0,y:0}, rotX=0.3, rotY=0.5;
-
-function buildAllThree(j){
-  build3D(j,'canvas-pc');
-  build3D(j,'canvas-3d-f');
-  build3D(j,'mcanvas-3d');
-}
-
-function build3D(j,cid){
-  const c=document.getElementById(cid); if(!c) return;
-  const par=c.parentElement;
-  const W=par.clientWidth||400, H=par.clientHeight||Math.round(W*0.75);
-  if(W<10) return;
-
-  if(!T3[cid]){
-    const ren=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:false});
-    ren.setClearColor(0x09090f,1);
-    const sc=new THREE.Scene();
-    const cam=new THREE.PerspectiveCamera(45,W/Math.max(H,1),0.1,2000);
-    cam.position.set(3,2.5,4); cam.lookAt(0,0,0);
-    sc.add(new THREE.AmbientLight(0xffffff,0.6));
-    const dl=new THREE.DirectionalLight(0x3d9bff,0.7); dl.position.set(5,8,5); sc.add(dl);
-    const dl2=new THREE.DirectionalLight(0xffffff,0.3); dl2.position.set(-4,-3,-5); sc.add(dl2);
-    sc.add(new THREE.GridHelper(10,20,0x1d2535,0x1d2535));
-    sc.add(new THREE.AxesHelper(1.2));
-    const grp=new THREE.Group(); sc.add(grp);
-    T3[cid]={ren,sc,cam,grp,aR:true};
-
-    const onD=e=>{iDrag=true;lastM={x:e.clientX||(e.touches&&e.touches[0].clientX),y:e.clientY||(e.touches&&e.touches[0].clientY)};T3[cid].aR=false;};
-    const onM=e=>{
-      if(!iDrag)return;
-      const cx=e.clientX||(e.touches&&e.touches[0].clientX)||lastM.x;
-      const cy=e.clientY||(e.touches&&e.touches[0].clientY)||lastM.y;
-      rotY+=(cx-lastM.x)*0.01; rotX+=(cy-lastM.y)*0.01;
-      lastM={x:cx,y:cy}; grp.rotation.y=rotY; grp.rotation.x=rotX;
-    };
-    c.addEventListener('mousedown',onD);
-    c.addEventListener('mousemove',onM);
-    c.addEventListener('mouseup',()=>iDrag=false);
-    c.addEventListener('touchstart',e=>{e.preventDefault();onD(e);},{passive:false});
-    c.addEventListener('touchmove',e=>{e.preventDefault();onM(e);},{passive:false});
-    c.addEventListener('touchend',()=>iDrag=false,{passive:true});
-    c.addEventListener('wheel',e=>T3[cid].cam.position.multiplyScalar(1+e.deltaY*0.001),{passive:true});
-    (function loop(){
-      requestAnimationFrame(loop);
-      const t=T3[cid];
-      if(t.aR) t.grp.rotation.y+=0.004;
-      t.ren.render(t.sc,t.cam);
-    })();
-  }
-
-  const t=T3[cid];
-  t.ren.setSize(W,H);
-  t.cam.aspect=W/Math.max(H,1);
-  t.cam.updateProjectionMatrix();
-  while(t.grp.children.length) t.grp.remove(t.grp.children[0]);
-
-  const SC=0.04, ov=j.overall||{w:100,h:60,d:20};
-  const C3=[0x3d9bff,0x00e094,0xffb800,0xa78bfa,0xff6b9d,0x00d4ff];
-  let ci=0;
-
-  // 베이스 박스 (반투명)
-  const bg=new THREE.BoxGeometry(ov.w*SC,ov.d*SC,ov.h*SC);
-  const bm=new THREE.Mesh(bg,new THREE.MeshPhongMaterial({color:0x1d2535,transparent:true,opacity:0.3,side:THREE.DoubleSide}));
-  bm.add(new THREE.LineSegments(new THREE.EdgesGeometry(bg),new THREE.LineBasicMaterial({color:0x3d9bff,transparent:true,opacity:0.5})));
-  t.grp.add(bm);
-
-  // 개별 형상
-  (j.shapes||[]).forEach(s=>{
-    if(s.id==='S1'&&(j.shapes||[]).length>1) return; // 전체 외곽 스킵 (다른 형상 있을 때)
-    const col=C3[ci++%C3.length];
-    const mat=new THREE.MeshPhongMaterial({
-      color:col, transparent:true,
-      opacity:s.hole?0.1:0.75,
-      wireframe:false
-    });
-    const sw=Math.max((s.w||50)*SC,0.01);
-    const sh=Math.max((s.h||30)*SC,0.01);
-    const sd=Math.max((s.depth||ov.d||20)*SC,0.01);
-    const sr=Math.max((s.r||20)*SC,0.01);
-    const px=((s.x||0)+(s.w||50)/2)*SC - ov.w*SC/2;
-    const pz=((s.y||0)+(s.h||30)/2)*SC - ov.h*SC/2;
-    const py=ov.d*SC/2+sd/2;
-
-    let geo,mesh;
-    if(s.type==='circle'){
-      geo=new THREE.CylinderGeometry(sr,sr*0.95,Math.max(sd,0.02),32);
-      mesh=new THREE.Mesh(geo,mat);
-      mesh.position.set(((s.x||0)+(s.r||25))*SC-ov.w*SC/2, py, ((s.y||0)+(s.r||25))*SC-ov.h*SC/2);
-    } else {
-      geo=new THREE.BoxGeometry(sw,sd,sh);
-      mesh=new THREE.Mesh(geo,mat);
-      mesh.position.set(px,py,pz);
-    }
-    if(mesh){
-      const edge=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:col,opacity:0.8,transparent:true}));
-      mesh.add(edge);
-      t.grp.add(mesh);
-    }
-  });
-
-  t.grp.position.y=-(ov.d||20)*SC/2;
-  t.grp.rotation.x=0.3; t.grp.rotation.y=0.5;
-}
-
-/* ── 결과 카드 ── */
-function renderCards(j){
-  const ov=j.overall||{};
-  let h=`<div class="card"><div class="ct">📐 ${j.title||'분석 결과'}</div>
-    <div class="cr"><span>전체 크기</span><b>${ov.w}×${ov.h}×${ov.d} mm</b></div>
-    <div class="cr"><span>스케일</span><b>${j.scale_basis||'100mm 기준'}</b></div>
-    <div class="cr"><span>형상 수</span><b>${(j.shapes||[]).length}개</b></div></div>`;
-  (j.shapes||[]).forEach((s,si)=>{
-    const col=COLORS[si%COLORS.length];
-    const cc=s.confidence==='high'?'tg':s.confidence==='medium'?'ta':'tr';
-    const ck={high:'높음',medium:'중간',low:'낮음'}[s.confidence]||'';
-    h+=`<div class="card" style="border-left:3px solid ${col}">
-      <div class="ct">[${s.id}] ${s.name}</div>
-      <div class="cr"><span>치수</span><b>${s.w}×${s.h}×${s.depth}mm${s.r?' r='+s.r:''}</b></div>
-      <div class="cr"><span>종류</span><b>${s.type}·${s.hole?'구멍':'솔리드'}</b></div>
-      <div class="cr"><span>신뢰도</span><span class="ctag ${cc}">${ck}${s.estimated?' 추정':''}</span></div>
-      ${s.note?`<div class="cr"><span>메모</span><b style="color:var(--tx2)">${s.note}</b></div>`:''}
-    </div>`;
-  });
-  if(j.conversion_notes?.length){
-    h+=`<div class="card" style="border-color:var(--am)"><div class="ct" style="color:var(--am)">⚠ 주의</div>`+
-      j.conversion_notes.map(n=>`<div class="cr"><b style="color:var(--am)">${n}</b></div>`).join('')+'</div>';
-  }
-  ['cards','mcards'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=h;});
-}
-
-/* ── 저장 ── */
 function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
 
-function getMainSVG(){
-  if(PC()){
-    if(GRID==='f') return document.getElementById('svg-front-f');
-    return document.getElementById('svg-front');
-  }
-  return document.getElementById('msvg-front');
-}
-
 function saveSVG(){
-  if(!CAD){alert('먼저 변환하세요');return;}
-  const svg=getMainSVG(); if(!svg) return;
-  dl('<?xml version="1.0"?>\n'+new XMLSerializer().serializeToString(svg),'승언ENG_정면도.svg','image/svg+xml');
+  if(!SVG_CODE){alert('먼저 변환하세요');return;}
+  dl('<?xml version="1.0" encoding="UTF-8"?>\n'+SVG_CODE,'승언ENG_CAD도면.svg','image/svg+xml');
 }
 function savePNG(){
-  if(!CAD){alert('먼저 변환하세요');return;}
-  const svg=getMainSVG(); if(!svg) return;
+  if(!SVG_CODE){alert('먼저 변환하세요');return;}
+  const svg=getSVG();if(!svg)return;
   const s=new XMLSerializer().serializeToString(svg);
   const img=new Image();
+  const W=svg.clientWidth||800, H=svg.clientHeight||600;
   img.onload=()=>{
     const cv=document.createElement('canvas');
-    cv.width=svg.clientWidth*2; cv.height=svg.clientHeight*2;
-    const ctx=cv.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img,0,0);
-    const a=document.createElement('a'); a.href=cv.toDataURL('image/png'); a.download='승언ENG_도면.png'; a.click();
+    cv.width=W*2;cv.height=H*2;
+    const ctx=cv.getContext('2d');
+    ctx.fillStyle='white';ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.scale(2,2);ctx.drawImage(img,0,0);
+    const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='승언ENG_CAD도면.png';a.click();
   };
   img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(s)));
 }
 function saveDXF(){
-  if(!CAD){alert('먼저 변환하세요');return;}
+  if(!SVG_CODE){alert('먼저 변환하세요');return;}
+  // SVG에서 선 추출해서 DXF로
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(SVG_CODE,'image/svg+xml');
   let dxf=`  0\nSECTION\n  2\nHEADER\n  9\n$INSUNITS\n 70\n4\n  0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n`;
-  (CAD.shapes||[]).forEach(s=>{
-    const lay=s.hole?'HIDDEN':'OUTLINE';
-    if(s.type==='circle'){
-      dxf+=`  0\nCIRCLE\n  8\n${lay}\n 10\n${(s.x||0)+(s.r||25)}\n 20\n${(s.y||0)+(s.r||25)}\n 30\n0\n 40\n${s.r||25}\n`;
-    }else{
-      const x=s.x||0,y=s.y||0,w=s.w||100,h=s.h||60;
-      dxf+=`  0\nLWPOLYLINE\n  8\n${lay}\n 90\n4\n 70\n1\n`;
-      [[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(v=>dxf+=` 10\n${v[0]}\n 20\n${v[1]}\n`);
+  // line 요소
+  doc.querySelectorAll('line').forEach(l=>{
+    dxf+=`  0\nLINE\n  8\nOUTLINE\n 10\n${l.getAttribute('x1')||0}\n 20\n${l.getAttribute('y1')||0}\n 30\n0\n 11\n${l.getAttribute('x2')||0}\n 21\n${l.getAttribute('y2')||0}\n 31\n0\n`;
+  });
+  // rect 요소
+  doc.querySelectorAll('rect').forEach(r=>{
+    const x=parseFloat(r.getAttribute('x')||0),y=parseFloat(r.getAttribute('y')||0);
+    const w=parseFloat(r.getAttribute('width')||0),h=parseFloat(r.getAttribute('height')||0);
+    dxf+=`  0\nLWPOLYLINE\n  8\nOUTLINE\n 90\n4\n 70\n1\n`;
+    [[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(v=>dxf+=` 10\n${v[0]}\n 20\n${v[1]}\n`);
+  });
+  // polyline 요소
+  doc.querySelectorAll('polyline,polygon').forEach(p=>{
+    const pts=(p.getAttribute('points')||'').trim().split(/[\s,]+/);
+    const pairs=[];
+    for(let i=0;i<pts.length-1;i+=2) pairs.push([parseFloat(pts[i]),parseFloat(pts[i+1])]);
+    if(pairs.length>1){
+      dxf+=`  0\nLWPOLYLINE\n  8\nOUTLINE\n 90\n${pairs.length}\n 70\n${p.tagName==='polygon'?1:0}\n`;
+      pairs.forEach(v=>dxf+=` 10\n${v[0]}\n 20\n${v[1]}\n`);
     }
   });
   dxf+=`  0\nENDSEC\n  0\nEOF`;
-  dl(dxf,'승언ENG_도면.dxf','text/plain');
+  dl(dxf,'승언ENG_CAD도면.dxf','text/plain');
 }
-function saveOBJ(){
-  if(!CAD){alert('먼저 변환하세요');return;}
-  const o=CAD.overall||{w:100,h:60,d:20};
-  let obj='# 승언ENG OBJ 단위:mm CCW\n\n';
-  obj+=`v 0 0 0\nv ${o.w} 0 0\nv ${o.w} ${o.h} 0\nv 0 ${o.h} 0\n`;
-  obj+=`v 0 0 ${o.d}\nv ${o.w} 0 ${o.d}\nv ${o.w} ${o.h} ${o.d}\nv 0 ${o.h} ${o.d}\n\n`;
-  obj+='f 1 2 3\nf 1 3 4\nf 5 7 6\nf 5 8 7\nf 1 6 2\nf 1 5 6\nf 2 7 3\nf 2 6 7\nf 3 8 4\nf 3 7 8\nf 4 5 1\nf 4 8 5\n';
-  dl(obj,'승언ENG_모델.obj','text/plain');
+function copyRaw(){
+  if(!SVG_CODE){alert('먼저 변환하세요');return;}
+  navigator.clipboard.writeText(SVG_CODE).then(()=>alert('SVG 코드가 복사됐습니다'));
 }
 
-/* ── 리사이즈 ── */
 window.addEventListener('resize',()=>{
-  if(CAD){ renderPC(CAD); renderMob(CAD); }
-  Object.entries(T3).forEach(([id,t])=>{
-    const c=document.getElementById(id); if(!c) return;
-    const par=c.parentElement;
-    const W=par.clientWidth||400, H=par.clientHeight||300;
-    if(W<10) return;
-    t.ren.setSize(W,H); t.cam.aspect=W/Math.max(H,1); t.cam.updateProjectionMatrix();
-  });
-});
-
-/* 초기 그리드 상태 설정 */
-window.addEventListener('DOMContentLoaded',()=>{
-  // grid-cad 초기 숨기기
-  const gc=document.getElementById('grid-cad'); if(gc) gc.style.display='none';
-  const gf=document.getElementById('grid-f'); if(gf) gf.style.display='none';
-  const g3=document.getElementById('grid-3d'); if(g3) g3.style.display='none';
+  if(SVG_CODE) setTimeout(zoomFit,100);
 });
 </script>
 </body>
